@@ -81,10 +81,21 @@ data\
   eval_20260625.csv   공공데이터포털 원본 2종째 - 장기요양기관 평가 결과 (평가등급 병기용)
 
 tools\
-  build_data.py       원본 xlsx -> day_care.json
+  build_data.py       원본 xlsx + 평가 csv -> day_care.json
   build_html.py       day_care.json -> build\index.html
-  verify_screen.py    화면 숫자 <-> 원본 전수 대조 (빌더 코드 미재사용)
-  그 외               시트 확인 · 결측 검증 · 프로토타입 · 이상치 검정 · 평가등급 대조
+  verify_screen.py    화면 숫자 <-> 원본 전수 대조 (빌더 코드 미재사용) + 평가등급 조인 대조
+  check_ux.html       화면을 실제로 조작해 동작 판정 (19건)   * Edge 헤드리스로 실행
+  check_mobile.html   360/390px 가로 넘침을 수치로 측정        * Edge 헤드리스로 실행
+  size_problem.py     문제의 크기를 데이터로 계산 (후보 수/격차)
+  time_script.py      발표 대본의 말하는 분량을 재서 3분 초과 여부 판정
+  md_to_html.py       기획서 md -> 인쇄용 html (PDF 출력 전 단계)
+  그 외               시트 확인 · 결측 검증 · 프로토타입 · 이상치 검정
+
+  헤드리스 실행 예:
+    "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --headless=new ^
+      --disable-gpu --allow-file-access-from-files --virtual-time-budget=14000 ^
+      --window-size=1000,1400 --screenshot=out.png "file:///%CD%/tools/check_ux.html"
+    (--headless 가 아니라 --headless=new 여야 한다. 구 모드는 조용히 아무것도 안 한다)
 
 ------------------------------------------------------------
 전체 재생성 방법
