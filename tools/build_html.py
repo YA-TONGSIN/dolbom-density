@@ -188,6 +188,13 @@ TEMPLATE = r"""<!DOCTYPE html>
   .bar small.fee{display:block;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);
                  font-size:var(--t-sm);color:var(--mute);font-weight:400;line-height:1.5}
   .bar small.fee b{color:var(--ink);font-weight:700}
+  /* 설명은 접어 둔다 — sticky 바가 커지면 스크롤 내내 목록을 가린다 */
+  .bar details.feenote{margin-top:6px}
+  .bar details.feenote summary{cursor:pointer;font-weight:700;color:var(--accent-deep);
+                               list-style:none;display:inline-flex;gap:5px;align-items:center}
+  .bar details.feenote summary::-webkit-details-marker{display:none}
+  .bar details.feenote summary::before{content:"ⓘ"}
+  .bar details.feenote[open]{padding-top:6px}
 
   /* 결과 — 카드 하나가 기관 하나. 넓으면 3열, 중간 2열, 휴대폰 1열 (시안 1c) */
   ol{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--s3)}
@@ -221,10 +228,13 @@ TEMPLATE = r"""<!DOCTYPE html>
   .calc{font-size:var(--t-sm);color:var(--mute)}
 
   /* 판정 배지 — 채움형 알약. 중간값 수치는 위 기준선에 있으므로 여기선 방향만 */
+  /* 판정 배지. 바탕을 --field(흰색)로 두면 카드와 같은 색이라
+     "중간값보다 많습니다"만 알약이 안 보이고 맨 글자로 읽힌다.
+     유리한 판정만 알약이고 불리한 판정은 아닌 건 공정하지 않다 → --soft 로 채운다. */
   .chip{
     display:inline-block;padding:7px 14px;border-radius:999px;
     font-size:var(--t-sm);font-weight:700;line-height:1.3;
-    background:var(--field);color:var(--ink);
+    background:var(--soft);color:var(--ink);
   }
   .chip.good{background:var(--accent-wash);color:var(--accent-deep)}
   .chip.near{background:var(--ink);color:var(--card);margin-left:6px}   /* 내 동네 표식 — 검정 알약 */
@@ -477,12 +487,18 @@ function feeLine(){
   const limit=FEE.limits[$grade.value];
   if(!limit) return '';
   const copay=Math.round(limit*FEE.copayRate);
+  // "약 211천원"은 회계 표기다. 50대 보호자가 쓰는 말은 "약 21만 원".
+  const man = Math.round(copay/10000).toLocaleString();
+  // 설명은 접어 둔다 — 이 블록은 sticky 바 안이라 펼쳐 두면 스크롤 내내 목록을 가린다.
   return '<small class="fee"><b>'+esc($grade.value)+'</b> 재가급여 월 한도 <b>'+limit.toLocaleString()+'원</b>'
-    + ' · 한도를 다 쓰면 본인부담 <b>약 '+Math.round(copay/1000).toLocaleString()+'천원</b>'
-    + '<br>한 달에 쓸 수 있는 <b>상한</b>이고, 주야간보호·방문요양 등을 <b>합쳐서</b> 쓰는 금액입니다. '
+    + ' · 한도를 다 쓰면 본인부담 <b>약 '+man+'만 원</b>'
+    + '<details class="feenote"><summary>이 금액이 무엇인지</summary>'
+    + '한 달에 쓸 수 있는 <b>상한</b>이고, 주야간보호·방문요양 등을 <b>합쳐서</b> 쓰는 금액입니다. '
     + '등급으로 정해지므로 <b>기관마다 같습니다</b>. 일반 대상 본인부담 '+(FEE.copayRate*100)+'% 기준이며, '
-    + '감경 대상은 비율이 다르고 식재료비·간식비 등 비급여는 빠져 있습니다. '
-    + '출처 '+esc(FEE.source)+' · '+esc(FEE.asOf)+'</small>';
+    + '감경 대상은 비율이 다르고 식재료비·간식비 등 비급여는 빠져 있습니다.<br>'
+    + '이 금액은 <b>위 공공데이터 2종에 들어 있지 않습니다.</b> '
+    + esc(FEE.source)+'('+esc(FEE.asOf)+')를 상수로 넣은 것이며, <b>순위·정렬에는 쓰지 않습니다.</b>'
+    + '</details></small>';
 }
 
 /* 읍면동 목록 — 시·군·구를 고른 뒤에만 보인다. 좌표가 없어 거리는 못 재지만
@@ -623,6 +639,13 @@ function draw(){
   const sidoName = DATA.sido[+$sido.value];
   const med = MED[sidoName];
 
+  // 같은 이름+주소가 이 지역에 두 번 이상 나오는지 미리 센다 (중복 등록 안내용)
+  const seen = new Map(), dupKeys = new Set();
+  current.forEach(r=>{
+    const k = r[F.name]+'|'+r[F.addr];
+    if(seen.has(k)) dupKeys.add(k); else seen.set(k, 1);
+  });
+
   $list.innerHTML = show.map((r,i)=>{
     const ratio=r[F.ratio], good = ratio < med;
     const tags=[];
@@ -635,11 +658,20 @@ function draw(){
     const cmp = good ? '중간값보다 적습니다' : '중간값보다 많습니다';
 
     // 개원 1년 미만 안내 — 카드 맨 아래, 한 줄로 접어 두고 누르면 전문. 버튼 높이를 흔들지 않기 위해
-    const note = r[F.isNew]
+    let note = r[F.isNew]
       ? '<details class="new"><summary>'+esc(r[F.since])+' 지정 · 개원 1년 미만 — 숫자가 실제보다 나쁘게 나올 수 있어요</summary>'
         + '<p>문 연 지 얼마 안 된 곳은 정원은 인가받은 최대치인데 인력은 채워지는 중이라 '
         + '이 숫자가 <b>실제보다 나쁘게</b> 나옵니다. 숫자만으로 판단하지 마세요.</p></details>'
       : '';
+    // 같은 이름·같은 주소가 두 번 나오는 경우가 있다. 원본에 기관코드가 둘로 등록된 것이라
+    // 어느 쪽이 실제인지 우리가 판단할 수 없어 합치지 않았다. 대신 화면에서 설명한다.
+    // 설명 없이 두면 보호자가 한 센터를 서로 다른 숫자로 두 번 보게 된다.
+    if(dupKeys.has(r[F.name]+'|'+r[F.addr])){
+      note += '<details class="new"><summary>같은 주소에 기관코드가 2개 등록돼 있어요 — 아래에 한 번 더 나옵니다</summary>'
+        + '<p>원본 자료에 이 시설이 <b>기관코드 2개로 등록</b>되어 있어 정원·인력 신고값이 서로 다릅니다. '
+        + '어느 쪽이 현재 상태인지는 자료만으로 알 수 없어 <b>합치지 않고 그대로 보여드립니다.</b> '
+        + '기관에 직접 확인하세요.</p></details>';
+    }
 
     const q=encodeURIComponent(r[F.name]+' '+r[F.sigungu]);
     // 지도 앱에 그대로 붙여넣도록 시·도까지 붙인 전체 주소.
@@ -673,7 +705,7 @@ function draw(){
       +     '<button class="copy" type="button" data-addr="'+esc(fullAddr)+'">주소 복사</button>'
       +   '</div>'
       +   '<a class="portal" target="_blank" rel="noopener noreferrer" '
-      +     'href="https://www.longtermcare.or.kr/npbs/r/a/201/selectLtcoSrch.web">공단 포털에서 이용가능·평가등급 확인</a>'
+      +     'href="https://www.longtermcare.or.kr/npbs/r/a/201/selectLtcoSrch.web">공단 포털에서 직접 찾기 (이용가능 여부)</a>'
       +   '</div>'
       + '</li>';
   }).join('');
