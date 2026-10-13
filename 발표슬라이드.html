@@ -45,31 +45,30 @@
   }
 
   /* ===== 표지 히어로 3D — 큐브 두 개가 서로 반대로 돈다 ===================== */
-  /* translateZ 는 퍼센트를 받지 않는다 → 크기를 변수로 두고 px 로 계산한다 */
-  .hero3d{--size:clamp(180px,26vw,340px);
-          position:absolute;right:10%;top:50%;width:var(--size);height:var(--size);
-          transform:translateY(-50%);perspective:1200px;pointer-events:none;z-index:0}
-  .hero3d .orb{position:absolute;inset:0;transform-style:preserve-3d;
-               --h:calc(var(--size)/2);animation:orbit 26s linear infinite}
-  .hero3d .orb.inner{inset:27%;--h:calc(var(--size)*.23);animation:orbit-rev 17s linear infinite}
+  /* ===== 표지 히어로 — 번져나가는 동심원 =================================
+     회전하는 와이어프레임 큐브는 '데이터·테크'의 은유라 돌봄 주제와 어긋난다.
+     국내 돌봄 플랫폼(케어닥 등)이 쓰는 어휘는 "안심·든든"이고 형태는 둥글다.
+     그래서 각진 회전 → 부드럽게 번지는 파문 + 천천히 숨 쉬는 중심으로 바꾼다. */
+  .hero3d{--size:clamp(220px,32vw,420px);
+          position:absolute;right:9%;top:50%;width:var(--size);height:var(--size);
+          transform:translateY(-50%);pointer-events:none;z-index:0}
   /* 표지 글자는 오브젝트 위로 */
   .slide.cover>:not(.hero3d){position:relative;z-index:1}
-  .hero3d .f{position:absolute;inset:0;border:2px solid rgba(255,255,255,.34);border-radius:4px}
-  .hero3d .orb.inner .f{border-color:rgba(255,255,255,.6)}
-  .hero3d .orb   .f:nth-child(1){transform:translateZ(var(--h))}
-  .hero3d .orb   .f:nth-child(2){transform:rotateY(180deg) translateZ(var(--h))}
-  .hero3d .orb   .f:nth-child(3){transform:rotateY(90deg)  translateZ(var(--h))}
-  .hero3d .orb   .f:nth-child(4){transform:rotateY(-90deg) translateZ(var(--h))}
-  .hero3d .orb   .f:nth-child(5){transform:rotateX(90deg)  translateZ(var(--h))}
-  .hero3d .orb   .f:nth-child(6){transform:rotateX(-90deg) translateZ(var(--h))}
-  /* 기울기를 고정하고 세로축만 돈다 — 어느 프레임에서도 입체로 읽힌다 */
-  @keyframes orbit{
-    from{transform:rotateX(-20deg) rotateZ(6deg) rotateY(0deg)}
-    to  {transform:rotateX(-20deg) rotateZ(6deg) rotateY(360deg)}
+  /* 고정 테두리 한 겹 — 파문이 사라진 순간에도 형태가 남는다 */
+  .hero3d::before{content:"";position:absolute;inset:6%;border:1px solid rgba(255,255,255,.17);border-radius:50%}
+  .hero3d .ring{position:absolute;inset:0;border:2px solid rgba(255,255,255,.45);border-radius:50%;
+                animation:ripple 9s cubic-bezier(.25,.6,.3,1) infinite}
+  .hero3d .core{position:absolute;inset:37%;border-radius:50%;
+                background:rgba(255,255,255,.15);animation:breathe 6.5s ease-in-out infinite}
+  .hero3d .core::after{content:"";position:absolute;inset:26%;border-radius:50%;background:rgba(255,255,255,.22)}
+  @keyframes ripple{
+    0%  {transform:scale(.26);opacity:0}
+    14% {opacity:.8}
+    100%{transform:scale(1.12);opacity:0}
   }
-  @keyframes orbit-rev{
-    from{transform:rotateX(16deg) rotateZ(-8deg) rotateY(360deg)}
-    to  {transform:rotateX(16deg) rotateZ(-8deg) rotateY(0deg)}
+  @keyframes breathe{
+    0%,100%{transform:scale(1);opacity:.9}
+    50%    {transform:scale(1.07);opacity:1}
   }
 
   /* ===== 내용 등장 — 슬라이드가 켜질 때 아래에서 올라오며 나타난다 ========== */
@@ -90,7 +89,8 @@
 
   /* 움직임에 민감한 사람에게는 전부 정지 */
   @media (prefers-reduced-motion:reduce){
-    .cube,.plane,.hero3d .orb{animation:none}
+    .cube,.plane,.hero3d .ring,.hero3d .core{animation:none}
+    .hero3d .ring{opacity:.35}
     .slide.on>*,.slide.on .cols>div,.slide.on .steps>div{animation:none}
   }
 
@@ -320,12 +320,13 @@
     bg.appendChild(el);
   });
 
-  /* 표지·마무리에 히어로 3D 오브젝트 — 큐브 안에 작은 큐브 */
+  /* 표지·마무리 히어로 — 동심원 4겹이 2.25초 간격으로 번져나가고, 중심이 숨 쉰다 */
   document.querySelectorAll('.slide.cover').forEach(s=>{
     const h=document.createElement('div');
     h.className='hero3d'; h.setAttribute('aria-hidden','true');
-    h.innerHTML='<div class="orb">'+'<i class="f"></i>'.repeat(6)+'</div>'
-              + '<div class="orb inner">'+'<i class="f"></i>'.repeat(6)+'</div>';
+    let html='';
+    for(let i=0;i<4;i++) html+='<i class="ring" style="animation-delay:'+(i*2.25)+'s"></i>';
+    h.innerHTML=html+'<i class="core"></i>';
     s.appendChild(h);
   });
 })();
