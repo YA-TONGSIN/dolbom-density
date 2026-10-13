@@ -238,7 +238,7 @@
   }
   /* 토글 5개 — 휴대폰에선 세로 한 줄씩, 넓은 화면에선 가로로 흘려 눈이 덜 오르내리게 */
   @media (min-width:640px){
-    .toggles{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s4,24px)}
+    .toggles{grid-template-columns:repeat(3,auto);justify-content:start;column-gap:var(--s4,24px)}
     .toggles label{white-space:nowrap}
   }
 
