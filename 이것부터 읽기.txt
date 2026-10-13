@@ -16,6 +16,7 @@
 ------------------------------------------------------------
 
 공개 주소: https://dolbomok.pages.dev
+소스 저장소: https://github.com/YA-TONGSIN/dolbom-density (10-13 작업물 기준 · 이후 변경은 git add -A → git commit → git push)
 계정: dkakrptehsrk@naver.com · dash.cloudflare.com → Workers & Pages → dolbomok
 
 화면을 고친 뒤 다시 올릴 때 (주소는 그대로 유지) — 이 폴더에서 명령 프롬프트 두 줄:
