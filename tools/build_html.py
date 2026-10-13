@@ -34,14 +34,15 @@ TEMPLATE = r"""<!DOCTYPE html>
      ============================================================== */
   :root{
     --ink:#16243f;         /* 글자 — 짙은 남색 */
-    --mute:#697585;        /* 보조 글자 */
+    --mute:#5a6576;        /* 보조 글자 — 흰 바탕 대비 6:1, 50대 사용자 기준 */
     --accent:#0a6b5c;      /* 강조 1색 — 틸 */
     --accent-deep:#07564a; /* 강조색 짙은 단계 (호버·테두리) */
     --accent-wash:#e8f1ee; /* 강조색 가장 옅은 단계 (배지 바탕) */
     --soft:#f4f7f7;        /* 면 */
     --line:#dfe6e7;        /* 구분선 */
 
-    --t-xs:11px; --t-sm:13px; --t-base:17px; --t-md:21px; --t-lg:27px; --t-xl:44px;
+    /* 가독성 바닥: 화면에 보이는 UI 글자는 15px 아래로 내려가지 않는다 (사용자 50대). 13은 푸터용 */
+    --t-xs:13px; --t-sm:15px; --t-base:17px; --t-md:21px; --t-lg:27px; --t-xl:44px;
     --s1:5px; --s2:8px; --s3:13px; --s4:21px; --s5:34px; --s6:55px;
     --r:12px; --r-sm:9px;
   }
@@ -65,10 +66,10 @@ TEMPLATE = r"""<!DOCTYPE html>
   }
   .wrap>*{margin:0}
 
-  .head{display:grid;row-gap:var(--s1)}
-  .eyebrow{font-size:var(--t-sm);color:var(--accent);font-weight:700;letter-spacing:.02em}
-  h1{font-size:var(--t-lg);letter-spacing:-0.025em;line-height:1.22;font-weight:700}
-  .lede{font-size:15px;color:var(--mute)}
+  .head{display:grid;row-gap:var(--s2)}
+  .eyebrow{font-size:var(--t-xs);color:var(--accent);font-weight:700;letter-spacing:.02em}
+  h1{font-size:var(--t-lg);letter-spacing:-0.02em;line-height:1.25;font-weight:700}
+  .lede{font-size:var(--t-base);color:var(--mute);line-height:1.5}
 
   /* 입력 영역 — 고르는 곳과 결과의 경계 */
   .panel{
@@ -77,7 +78,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   }
   .pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--s3)}
   .pick label,.find label{display:grid;row-gap:var(--s1);min-width:0}
-  .pick span,.find span{font-size:var(--t-sm);color:var(--mute)}
+  .pick span,.find span{font-size:var(--t-sm);color:var(--ink);font-weight:700}
   select,.find input{
     width:100%;padding:var(--s3) 12px;font-size:var(--t-base);font-family:inherit;
     color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:var(--r-sm);
@@ -85,7 +86,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   select:focus,.find input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash)}
   .find{display:grid}
 
-  .opts{display:grid;grid-template-columns:1fr auto;gap:var(--s2) var(--s3);align-items:center;font-size:15px}
+  .opts{display:grid;grid-template-columns:1fr auto;gap:var(--s2) var(--s3);align-items:center;font-size:var(--t-base)}
   .opts label{display:flex;align-items:center;gap:var(--s2);cursor:pointer}
   .opts input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
   button.share{
@@ -99,9 +100,9 @@ TEMPLATE = r"""<!DOCTYPE html>
   .bar{
     position:sticky;top:0;z-index:5;
     padding:var(--s3);border:1px solid var(--line);border-left:4px solid var(--accent);
-    border-radius:var(--r-sm);background:#fbfdfd;font-size:15px;
+    border-radius:var(--r-sm);background:#fbfdfd;font-size:var(--t-base);line-height:1.5;
   }
-  .bar b{font-size:var(--t-base)}
+  .bar b{font-size:19px}
 
   ol{list-style:none;padding:0;display:grid;row-gap:0}
   li{border-bottom:1px solid var(--line);padding:var(--s4) 0}
@@ -113,21 +114,21 @@ TEMPLATE = r"""<!DOCTYPE html>
     display:grid;place-items:center;margin-top:2px;
     font-size:var(--t-sm);font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums;
   }
-  .body{display:grid;row-gap:var(--s2);min-width:0}
-  .name{font-size:19px;font-weight:700;word-break:keep-all;line-height:1.3}
-  .where{font-size:var(--t-sm);color:var(--mute);word-break:keep-all}
+  .body{display:grid;row-gap:10px;min-width:0}
+  .name{font-size:var(--t-md);font-weight:700;word-break:keep-all;line-height:1.3}
+  .where{font-size:var(--t-sm);color:var(--mute);word-break:keep-all;line-height:1.5}
 
-  .big{display:flex;align-items:baseline;gap:7px}
-  .num{font-size:34px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+  .big{display:flex;align-items:baseline;gap:8px}
+  .num{font-size:36px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
   .num.good{color:var(--accent)}
   .unit{font-size:var(--t-sm);color:var(--mute)}
   .calc{font-size:var(--t-sm);color:var(--mute)}
 
   /* 판정 배지 — 중앙값 수치는 위 기준선에 있으므로 여기선 방향만 말한다 */
   .chip{
-    display:inline-block;padding:4px var(--s3);border-radius:999px;
-    font-size:var(--t-sm);font-weight:700;
-    background:var(--soft);color:var(--mute);border:1px solid var(--line);
+    display:inline-block;padding:6px 14px;border-radius:999px;
+    font-size:var(--t-sm);font-weight:700;line-height:1.3;
+    background:var(--soft);color:var(--ink);border:1px solid var(--line);
   }
   .chip.good{background:var(--accent-wash);color:var(--accent-deep);border-color:#cfe3dd}
 
@@ -141,32 +142,35 @@ TEMPLATE = r"""<!DOCTYPE html>
     .verdict{grid-area:verdict}.new{grid-area:note}.tags{grid-area:tags}.act{grid-area:act}
     .big{grid-area:big;flex-direction:column;align-items:flex-end;gap:0;text-align:right}
     .num{font-size:var(--t-xl)}
-    .unit{font-size:var(--t-xs)}
+    .unit{font-size:var(--t-sm)}
   }
 
-  /* 중앙값 대비 막대 — 가운데 눈금이 해당 시·도 중앙값 */
-  .meter{max-width:420px}
-  .meter .track{position:relative;height:var(--s2);background:var(--soft);border:1px solid var(--line);border-radius:999px}
+  /* 중앙값 대비 막대 — 가운데 눈금이 해당 시·도 중앙값. 수치는 안 적고 "중앙값" 한 단어만 */
+  .meter{max-width:420px;display:grid;row-gap:4px}
+  .meter .track{position:relative;height:10px;background:var(--soft);border:1px solid var(--line);border-radius:999px}
   .meter .fill{height:100%;border-radius:999px;background:var(--mute)}
   .meter .fill.good{background:var(--accent)}
-  .meter .tick{position:absolute;left:50%;top:-5px;bottom:-5px;width:2px;background:var(--ink);border-radius:1px}
+  .meter .tick{position:absolute;left:50%;top:-6px;bottom:-6px;width:2px;background:var(--ink);border-radius:1px}
+  .meter .lab{display:grid;grid-template-columns:1fr auto 1fr;font-size:var(--t-xs);color:var(--mute)}
+  .meter .lab span:nth-child(2){justify-self:center;font-weight:700;color:var(--ink)}
+  .meter .lab span:last-child{justify-self:end}
 
-  .tags{font-size:var(--t-sm);color:var(--mute)}
+  .tags{font-size:var(--t-sm);color:var(--mute);line-height:1.5}
   .tags i{font-style:normal}
 
   .new{
     font-size:var(--t-sm);padding:var(--s3);border-radius:var(--r-sm);
-    background:var(--soft);border:1px solid var(--line);color:var(--ink);line-height:1.6;
+    background:var(--soft);border:1px solid var(--line);color:var(--ink);line-height:1.65;
   }
   .new b{font-weight:700}
 
   .act{display:grid;row-gap:var(--s2);justify-items:start}
   a.go{
-    display:inline-block;padding:var(--s3) var(--s4);font-size:16px;font-weight:700;
+    display:inline-block;padding:var(--s3) var(--s4);font-size:var(--t-base);font-weight:700;
     color:#fff;background:var(--accent);border-radius:var(--r-sm);text-decoration:none;
   }
   a.go:hover{background:var(--accent-deep)}
-  a.portal{font-size:var(--t-sm);color:var(--mute);text-decoration:underline;word-break:keep-all}
+  a.portal{font-size:var(--t-sm);color:var(--mute);text-decoration:underline;text-underline-offset:3px;word-break:keep-all}
   a.portal:hover{color:var(--accent-deep)}
 
   .more{
@@ -179,15 +183,15 @@ TEMPLATE = r"""<!DOCTYPE html>
   .empty{padding:var(--s5) 0;color:var(--mute);border:0}
 
   footer{padding-top:var(--s4);border-top:1px solid var(--line);
-         font-size:var(--t-sm);color:var(--mute);line-height:1.7;display:grid;row-gap:2px}
+         font-size:14px;color:var(--mute);line-height:1.7;display:grid;row-gap:2px}
   footer b{color:var(--ink)}
-  .warn{margin-top:var(--s2);padding:var(--s3);background:var(--soft);border-radius:var(--r-sm);line-height:1.65}
+  .warn{margin-top:var(--s2);padding:var(--s3);background:var(--soft);border-radius:var(--r-sm);line-height:1.7;font-size:var(--t-sm)}
 
   @media (max-width:480px){
     .wrap{padding:var(--s3) var(--s3) var(--s5);row-gap:var(--s3)}
     .pick{grid-template-columns:1fr;gap:var(--s2)}
-    h1{font-size:var(--t-md)}
-    .num{font-size:30px}
+    h1{font-size:23px}
+    .num{font-size:34px}
     .rank{width:26px;height:26px;font-size:12px}
     .row{column-gap:var(--s2)}
     li{padding:var(--s3) 0}
@@ -338,6 +342,7 @@ function meter(ratio, med, good){
   return '<div class="meter" title="가운데 눈금이 '+fmt(med)+'명(중앙값)"><div class="track">'
     + '<div class="fill'+(good?' good':'')+'" style="width:'+pct.toFixed(1)+'%"></div>'
     + '<div class="tick"></div></div>'
+    + '<div class="lab"><span>적음</span><span>▲ 중앙값</span><span>많음</span></div>'
     + '</div>';
 }
 
