@@ -153,14 +153,19 @@
   li:hover{box-shadow:var(--shadow-lift);transform:translateY(-1px)}
 
   /* 카드 안 구성(시안): N위 + 기관명 → 주소 → "요양보호사 1명이 돌보는 어르신" → 큰 숫자 → 근거 → 막대 → 배지 → 인력 → 행동 */
-  /* 카드 높이는 같은 줄에서 맞춰지고(그리드 stretch), 버튼은 아래로 밀어 줄마다 같은 높이에 선다 */
-  li{display:grid}
-  .row{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);
-       column-gap:10px;align-items:baseline;height:100%}
-  .rank{font-size:var(--t-sm);font-weight:800;color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
-  .body{display:flex;flex-direction:column;gap:8px;min-width:0;grid-column:1 / -1;height:100%}
-  .body>.act{margin-top:auto}
-  .name{font-size:var(--t-md);font-weight:700;word-break:keep-all;line-height:1.3}
+  /* 카드 안은 평평한 10행 그리드. 서브그리드를 쓰면 같은 줄 카드끼리
+     이름·주소·숫자·막대 행 높이가 전부 맞아 떨어진다 (주소가 두 줄인 카드가 섞여도) */
+  li{display:grid;grid-template-rows:repeat(10,auto);row-gap:8px}
+  li>.act{margin-top:auto}
+  @supports (grid-template-rows:subgrid){
+    ol{grid-auto-rows:auto}
+    li{grid-row:span 10;grid-template-rows:subgrid}
+    li>.act{margin-top:0}
+  }
+  .rank{font-size:var(--t-sm);font-weight:800;color:var(--mute);font-variant-numeric:tabular-nums;
+        white-space:nowrap;margin-right:7px}
+  .name{font-size:var(--t-md);font-weight:700;word-break:keep-all;line-height:1.3;align-self:start}
+  /* 빈 슬롯도 숨기지 않는다 — 숨기면 그 카드만 행이 하나 줄어 버튼이 다시 어긋난다 */
   .where{font-size:var(--t-sm);color:var(--mute);word-break:keep-all;line-height:1.5}
   .cap{font-size:var(--t-sm);color:var(--mute);margin-top:4px}
 
@@ -243,7 +248,6 @@
     h1{font-size:23px}
     .num{font-size:34px}
     .rank{width:26px;height:26px;font-size:12px}
-    .row{column-gap:var(--s2)}
     li{padding:var(--s3) 15px}
     .panel{padding:var(--s3) 15px}
     .opts{grid-template-columns:1fr}
@@ -483,10 +487,9 @@ function draw(){
       : '';
 
     const q=encodeURIComponent(r[F.name]+' '+r[F.sigungu]);
-    return '<li><div class="row">'
-      + '<div class="rank">'+r.rank+'위</div>'
-      + '<p class="name">'+esc(r[F.name])+'</p>'
-      + '<div class="body">'
+    // 카드 안을 평평한 10행으로 둔다 — 서브그리드로 같은 줄 카드의 행 높이를 맞추기 위해
+    return '<li>'
+      + '<p class="name"><span class="rank">'+r.rank+'위</span>'+esc(r[F.name])+'</p>'
       +   '<p class="where">'+esc(r[F.sigungu]+' '+r[F.addr])+'</p>'
       +   '<p class="cap">요양보호사 1명이 돌보는 어르신</p>'
       +   '<div class="big"><span class="num'+(good?' good':'')+'">'+fmt(ratio)+'</span>'
@@ -496,14 +499,14 @@ function draw(){
       +   '<p class="verdict"><span class="chip'+(good?' good':'')+'">'+cmp+'</span>'
       +     (($dong.value && r[F.dong]===$dong.value)? '<span class="chip near">내 동네</span>' : '')+'</p>'
       +   '<p class="tags"><b>인력</b> <i>'+tags.join(' · ')+'</i></p>'
-      +   note
+      +   '<div class="noteslot">'+note+'</div>'
       +   '<div class="act">'
       +   '<a class="go" target="_blank" rel="noopener noreferrer" '
       +     'href="https://search.naver.com/search.naver?query='+q+'">전화번호 찾아보기</a>'
       +   '<a class="portal" target="_blank" rel="noopener noreferrer" '
       +     'href="https://www.longtermcare.or.kr/npbs/r/a/201/selectLtcoSrch.web">공단 포털에서 이용가능·평가등급 확인</a>'
       +   '</div>'
-      + '</div></div></li>';
+      + '</li>';
   }).join('');
 
   if(!expanded && current.length>PAGE){
