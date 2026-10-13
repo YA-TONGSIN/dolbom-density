@@ -35,6 +35,12 @@ FEE = {
 with open(src, encoding="utf-8") as f:
     data = json.load(f)
 
+# ③ 전화번호 집계 — 화면 하단 출처 표기용.
+# 빌드할 때마다 탑재 데이터에서 다시 세어 넣는다 (수기 입력 금지).
+_ti = data["fields"].index("tel") if "tel" in data["fields"] else None
+TEL_N = 0 if _ti is None else sum(1 for r in data["items"] if len(r) > _ti and r[_ti])
+TEL_PCT = round(TEL_N / len(data["items"]) * 100, 1) if data["items"] else 0.0
+
 data["fee"] = FEE if (FEE["asOf"] and FEE["limits"]) else None
 payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
 
@@ -44,7 +50,7 @@ TEMPLATE = r"""<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>주야간보호센터 돌봄 밀도 비교 — 요양보호사 1인당 어르신 수로 전국 비교</title>
-<meta name="description" content="부모님 동네 주야간보호센터를 요양보호사 1인당 어르신 수로 비교합니다. 공공데이터 2종(국민건강보험공단 장기요양기관 시설별 현황 + 평가 결과), 전국 __COUNT__곳, 공단 평가등급과 나란히 표시.">
+<meta name="description" content="부모님 동네 주야간보호센터를 요양보호사 1인당 어르신 수로 비교합니다. 공공데이터 3종(국민건강보험공단 장기요양기관 시설별 현황 + 평가 결과 + 상세정보 조회), 전국 __COUNT__곳, 공단 평가등급·전화번호를 나란히 표시.">
 <meta property="og:title" content="주야간보호센터 돌봄 밀도 비교">
 <meta property="og:description" content="공단 평가등급은 알려주지 않는 숫자 — 요양보호사 한 명이 어르신 몇 분을 돌보는지로 전국 주야간보호센터를 비교합니다.">
 <meta property="og:type" content="website">
@@ -379,7 +385,7 @@ TEMPLATE = r"""<!DOCTYPE html>
 <div class="wrap">
 
   <header class="head">
-    <p class="eyebrow">공공데이터 2종 · 전국 __COUNT__곳</p>
+    <p class="eyebrow">공공데이터 3종 · 전국 __COUNT__곳</p>
     <h1>주야간보호센터 돌봄 밀도 비교</h1>
     <p class="lede">요양보호사 한 명이 어르신 몇 분을 돌보는지로 비교합니다. 숫자가 적을수록 한 분께 더 많은 손길이 갑니다.</p>
     <p class="insight">공단 평가 <b>A등급</b>을 받은 __GAPBASE__곳 가운데 <b>__GAPCOUNT__곳(__GAPPCT__%)</b>은
@@ -428,6 +434,8 @@ TEMPLATE = r"""<!DOCTYPE html>
     <div><b>자료 기준일</b> __BASEDATE__ · <b>갱신 주기</b> __CYCLE__</div>
     <div><b>출처 ②</b> 공공데이터포털 · __SOURCE2__ (데이터 __DATAID2__) · 평가일자 __EVALRANGE__</div>
     <div><b>두 자료 연결</b> __JOINKEY__ · 등급이 붙은 곳 <b>__EVALMATCHED__곳(__EVALRATE__%)</b>, 나머지는 「평가 이력 없음」</div>
+    <div><b>출처 ③</b> 공공데이터포털 · 국민건강보험공단_장기요양기관 시설별 상세정보 조회 (데이터 15058856) · 전화번호만 사용</div>
+    <div><b>전화번호</b> 기관코드로 연결해 <b>__TELMATCHED__곳(__TELRATE__%)</b>에 붙였습니다 · 받지 못한 곳은 비워 두었습니다 · 순위·정렬에는 쓰지 않습니다</div>
     <div><b>대상</b> __TYPES__ · 전국 <b>__COUNT__곳</b></div>
     <div><b>계산식</b> 요양보호사 1인당 어르신 수 = 정원 &divide; 요양보호사 수 (적을수록 앞)</div>
     <div><b>중간값 기준</b> __MEDIANNOTE__ (개원 __NEWCOUNT__곳 제외)</div>
@@ -515,7 +523,7 @@ function feeLine(){
     + '한 달에 쓸 수 있는 <b>상한</b>이고, 주야간보호·방문요양 등을 <b>합쳐서</b> 쓰는 금액입니다. '
     + '등급으로 정해지므로 <b>기관마다 같습니다</b>. 일반 대상 본인부담 '+(FEE.copayRate*100)+'% 기준이며, '
     + '감경 대상은 비율이 다르고 식재료비·간식비 등 비급여는 빠져 있습니다.<br>'
-    + '이 금액은 <b>위 공공데이터 2종에 들어 있지 않습니다.</b> '
+    + '이 금액은 <b>위 공공데이터 3종에 들어 있지 않습니다.</b> '
     + esc(FEE.source)+'('+esc(FEE.asOf)+')를 상수로 넣은 것이며, <b>순위·정렬에는 쓰지 않습니다.</b>'
     + '</details></small>';
 }
@@ -807,7 +815,10 @@ html = (TEMPLATE
         .replace("__GAPCOUNT__", f"{m['gapCount']:,}")
         .replace("__GAPBASE__", f"{m['gapBase']:,}")
         .replace("__GAPPCT__", f"{m['gapPct']}")
-        .replace("__CORR__", f"{m['corr']}"))
+        .replace("__CORR__", f"{m['corr']}")
+        # ── 3종째(상세정보 조회 — 전화번호) 관련 ──────────────────
+        .replace("__TELMATCHED__", f"{TEL_N:,}")
+        .replace("__TELRATE__", f"{TEL_PCT}"))
 
 outdir = os.path.dirname(out)
 if outdir:                      # 현재 폴더에 바로 쓰는 경우 dirname이 빈 문자열이다
