@@ -136,9 +136,10 @@
   button.share:hover{background:var(--line)}
   button.share:active{transform:scale(.97)}
 
-  /* 지역 기준선 — 떠 있는 흰 카드, 스크롤해도 남는다. 중간값 수치는 화면에서 여기 한 곳에만 */
+  /* 지역 기준선 — 목록 위 흰 카드. 중간값 수치는 화면에서 여기 한 곳에만.
+     따라 내려오지 않는다 — 필터·비용 줄이 붙으면 바가 커져 스크롤 내내 카드를 가렸다 */
   .bar{
-    position:sticky;top:var(--s2);z-index:5;
+    position:relative;z-index:5;
     padding:var(--s3) var(--s4);border-radius:var(--r-sm);
     background:var(--card);box-shadow:var(--shadow-lift);border:1px solid var(--hair);
     font-size:var(--t-base);line-height:1.5;backdrop-filter:saturate(1.2);
@@ -148,7 +149,7 @@
   .bar small.fee{display:block;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);
                  font-size:var(--t-sm);color:var(--mute);font-weight:400;line-height:1.5}
   .bar small.fee b{color:var(--ink);font-weight:700}
-  /* 설명은 접어 둔다 — sticky 바가 커지면 스크롤 내내 목록을 가린다 */
+  /* 설명은 접어 둔다 — 펼치면 바가 길어져 목록이 밀린다 */
   .bar details.feenote{margin-top:6px}
   .bar details.feenote summary{cursor:pointer;font-weight:700;color:var(--accent-deep);
                                list-style:none;display:inline-flex;gap:5px;align-items:center}
@@ -502,7 +503,7 @@ function feeLine(){
   const copay=Math.round(limit*FEE.copayRate);
   // "약 211천원"은 회계 표기다. 50대 보호자가 쓰는 말은 "약 21만 원".
   const man = Math.round(copay/10000).toLocaleString();
-  // 설명은 접어 둔다 — 이 블록은 sticky 바 안이라 펼쳐 두면 스크롤 내내 목록을 가린다.
+  // 설명은 접어 둔다 — 펼쳐 두면 바가 길어져 목록이 밀린다.
   return '<small class="fee"><b>'+esc($grade.value)+'</b> 재가급여 월 한도 <b>'+limit.toLocaleString()+'원</b>'
     + ' · 한도를 다 쓰면 본인부담 <b>약 '+man+'만 원</b>'
     + '<details class="feenote"><summary>이 금액이 무엇인지</summary>'
