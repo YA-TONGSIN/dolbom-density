@@ -36,8 +36,63 @@
     from{transform:rotateX(0deg) rotateY(0deg)}
     to  {transform:rotateX(360deg) rotateY(360deg)}
   }
-  /* 움직임에 민감한 사람에게는 정지 상태로 */
-  @media (prefers-reduced-motion:reduce){ .cube{animation:none} }
+  /* 평면 프레임 — 큐브 사이에 섞어 리듬을 준다 */
+  .plane{position:absolute;border:1px solid var(--accent);opacity:.1;border-radius:3px;
+         animation:drift linear infinite}
+  @keyframes drift{
+    from{transform:rotateX(62deg) rotateZ(0deg)}
+    to  {transform:rotateX(62deg) rotateZ(360deg)}
+  }
+
+  /* ===== 표지 히어로 3D — 큐브 두 개가 서로 반대로 돈다 ===================== */
+  /* translateZ 는 퍼센트를 받지 않는다 → 크기를 변수로 두고 px 로 계산한다 */
+  .hero3d{--size:clamp(180px,26vw,340px);
+          position:absolute;right:10%;top:50%;width:var(--size);height:var(--size);
+          transform:translateY(-50%);perspective:1200px;pointer-events:none;z-index:0}
+  .hero3d .orb{position:absolute;inset:0;transform-style:preserve-3d;
+               --h:calc(var(--size)/2);animation:orbit 26s linear infinite}
+  .hero3d .orb.inner{inset:27%;--h:calc(var(--size)*.23);animation:orbit-rev 17s linear infinite}
+  /* 표지 글자는 오브젝트 위로 */
+  .slide.cover>:not(.hero3d){position:relative;z-index:1}
+  .hero3d .f{position:absolute;inset:0;border:2px solid rgba(255,255,255,.34);border-radius:4px}
+  .hero3d .orb.inner .f{border-color:rgba(255,255,255,.6)}
+  .hero3d .orb   .f:nth-child(1){transform:translateZ(var(--h))}
+  .hero3d .orb   .f:nth-child(2){transform:rotateY(180deg) translateZ(var(--h))}
+  .hero3d .orb   .f:nth-child(3){transform:rotateY(90deg)  translateZ(var(--h))}
+  .hero3d .orb   .f:nth-child(4){transform:rotateY(-90deg) translateZ(var(--h))}
+  .hero3d .orb   .f:nth-child(5){transform:rotateX(90deg)  translateZ(var(--h))}
+  .hero3d .orb   .f:nth-child(6){transform:rotateX(-90deg) translateZ(var(--h))}
+  /* 기울기를 고정하고 세로축만 돈다 — 어느 프레임에서도 입체로 읽힌다 */
+  @keyframes orbit{
+    from{transform:rotateX(-20deg) rotateZ(6deg) rotateY(0deg)}
+    to  {transform:rotateX(-20deg) rotateZ(6deg) rotateY(360deg)}
+  }
+  @keyframes orbit-rev{
+    from{transform:rotateX(16deg) rotateZ(-8deg) rotateY(360deg)}
+    to  {transform:rotateX(16deg) rotateZ(-8deg) rotateY(0deg)}
+  }
+
+  /* ===== 내용 등장 — 슬라이드가 켜질 때 아래에서 올라오며 나타난다 ========== */
+  .slide.on>*{animation:rise .52s cubic-bezier(.2,.8,.2,1) backwards}
+  .slide.on>*:nth-child(1){animation-delay:.04s}
+  .slide.on>*:nth-child(2){animation-delay:.11s}
+  .slide.on>*:nth-child(3){animation-delay:.18s}
+  .slide.on>*:nth-child(4){animation-delay:.25s}
+  .slide.on>*:nth-child(5){animation-delay:.32s}
+  .slide.on>*:nth-child(6){animation-delay:.39s}
+  @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  /* 카드·단계 타일은 한 번 더 쪼개서 차례로 */
+  .slide.on .cols>div,.slide.on .steps>div{animation:rise .52s cubic-bezier(.2,.8,.2,1) backwards}
+  .slide.on .cols>div:nth-child(1),.slide.on .steps>div:nth-child(1){animation-delay:.30s}
+  .slide.on .cols>div:nth-child(2),.slide.on .steps>div:nth-child(2){animation-delay:.38s}
+  .slide.on .cols>div:nth-child(3),.slide.on .steps>div:nth-child(3){animation-delay:.46s}
+  .slide.on .steps>div:nth-child(4){animation-delay:.54s}
+
+  /* 움직임에 민감한 사람에게는 전부 정지 */
+  @media (prefers-reduced-motion:reduce){
+    .cube,.plane,.hero3d .orb{animation:none}
+    .slide.on>*,.slide.on .cols>div,.slide.on .steps>div{animation:none}
+  }
 
   .slide{display:none;width:calc(100*var(--w));height:calc(100*var(--u));
          padding:calc(6*var(--u)) calc(8*var(--w)) calc(9*var(--u));
@@ -116,8 +171,10 @@
     html,body{overflow:visible;height:auto}
     .slide{display:flex !important;width:1280px;height:720px;page-break-after:always;break-after:page;overflow:hidden}
     .slide:last-child{page-break-after:auto;break-after:auto}
-    /* 제출용 PDF에서는 배경 큐브를 빼서 가독성을 지킨다. 카드·표지 색은 그대로 인쇄 */
-    footer,.bar,.bg{display:none}
+    /* 제출용 PDF에서는 배경·히어로 3D를 빼서 가독성을 지킨다. 카드·표지 색은 그대로 인쇄 */
+    footer,.bar,.bg,.hero3d{display:none}
+    /* 등장 애니메이션이 opacity 0 에서 시작하므로 인쇄에서는 반드시 꺼야 글자가 찍힌다 */
+    *{animation:none !important}
     body,.slide,.card,table,.box,.steps div,.kicker,.eq{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 </style>
@@ -239,18 +296,32 @@
 </footer>
 
 <script>
-/* 배경 큐브 생성 — 화면 가장자리 위주로 배치해 가운데 글자를 피한다 */
+/* 배경 3D 생성 — 화면 가장자리 위주로 배치해 가운데 글자를 피한다.
+   큐브와 평면 프레임을 섞어 단조롭지 않게 한다. */
 (function(){
   const bg=document.getElementById('bg');
-  const SPOTS=[[6,14,120],[88,20,86],[14,74,150],[80,80,104],[50,8,70],[94,52,64],[4,44,78],[40,90,92]];
-  SPOTS.forEach(([x,y,size],i)=>{
-    const c=document.createElement('div');
-    c.className='cube';
-    c.style.cssText='left:'+x+'%;top:'+y+'%;width:'+size+'px;height:'+size+'px;'
+  //        x%  y%  크기  종류
+  const SPOTS=[
+    [ 6,14,120,'cube'], [88,20, 86,'plane'], [14,74,150,'cube'],
+    [80,80,104,'cube'], [50, 8, 70,'plane'], [94,52, 64,'cube'],
+    [ 4,44, 78,'plane'],[40,90, 92,'cube'],  [70,38, 58,'plane']];
+  SPOTS.forEach(([x,y,size,kind],i)=>{
+    const el=document.createElement('div');
+    el.className=kind;
+    el.style.cssText='left:'+x+'%;top:'+y+'%;width:'+size+'px;height:'+size+'px;'
       + '--h:'+(size/2)+'px;margin:'+(-size/2)+'px 0 0 '+(-size/2)+'px;'
-      + 'animation-duration:'+(44+i*9)+'s;animation-delay:'+(-i*6)+'s';
-    c.innerHTML='<i class="f"></i>'.repeat(6);
-    bg.appendChild(c);
+      + 'animation-duration:'+(40+i*8)+'s;animation-delay:'+(-i*5)+'s';
+    if(kind==='cube') el.innerHTML='<i class="f"></i>'.repeat(6);
+    bg.appendChild(el);
+  });
+
+  /* 표지·마무리에 히어로 3D 오브젝트 — 큐브 안에 작은 큐브 */
+  document.querySelectorAll('.slide.cover').forEach(s=>{
+    const h=document.createElement('div');
+    h.className='hero3d'; h.setAttribute('aria-hidden','true');
+    h.innerHTML='<div class="orb">'+'<i class="f"></i>'.repeat(6)+'</div>'
+              + '<div class="orb inner">'+'<i class="f"></i>'.repeat(6)+'</div>';
+    s.appendChild(h);
   });
 })();
 
