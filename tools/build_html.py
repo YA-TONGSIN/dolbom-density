@@ -237,6 +237,8 @@ TEMPLATE = r"""<!DOCTYPE html>
   /* 주소 줄 끝에 전화번호. 새 행을 만들지 않는다 — 카드가 서브그리드 10행으로 묶여 있어
      행을 늘리면 3열에서 카드끼리 높이가 어긋난다. */
   .where .telno{color:var(--ink);font-weight:700;white-space:nowrap}
+  /* 번호가 없는 기관. 숨기지 않고 사실대로 적는다 — 빈칸은 오해를 만든다 */
+  .where .telno.none{color:var(--mute);font-weight:400}
   .cap{font-size:var(--t-sm);color:var(--mute);margin-top:4px}
 
   .big{display:flex;align-items:baseline;gap:6px}
@@ -355,7 +357,13 @@ TEMPLATE = r"""<!DOCTYPE html>
   .more:hover{box-shadow:var(--shadow-lift)}
   .more:active{transform:scale(.99)}
   [hidden]{display:none !important}
-  .empty{padding:var(--s5) 0;color:var(--mute);text-align:center;box-shadow:none;background:transparent}
+  /* 안내 카드는 기관 카드가 아니다 — 10행 서브그리드를 물려받으면 빈 상자를 끌고 나온다 */
+  .empty{padding:var(--s5) 0;color:var(--mute);text-align:center;box-shadow:none;background:transparent;
+         border:0;display:block;grid-column:1/-1}
+  @supports (grid-template-rows:subgrid){ .empty{grid-row:auto;grid-template-rows:none} }
+  /* 비용 등급 선택기도 위 입력들과 같은 폭 규칙을 따른다 */
+  #feepick{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  #feepick label{max-width:320px}
 
   footer{padding:var(--s3) var(--s1) 0;font-size:14px;color:var(--mute);line-height:1.7;display:grid;row-gap:2px}
   footer b{color:var(--ink)}
@@ -398,7 +406,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     <label><span>시 · 도</span>
       <select id="sido"><option value="">선택하세요</option></select>
     </label>
-    <label><span>시 · 군 · 구</span>
+    <label><span id="sgglabel">시 · 군 · 구</span>
       <select id="sgg"><option value="">전체</option></select>
     </label>
     <label id="dongwrap" hidden><span>읍면동 — 내 동네 먼저 (선택)</span>
@@ -434,7 +442,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     <div><b>자료 기준일</b> __BASEDATE__ · <b>갱신 주기</b> __CYCLE__</div>
     <div><b>출처 ②</b> 공공데이터포털 · __SOURCE2__ (데이터 __DATAID2__) · 평가일자 __EVALRANGE__</div>
     <div><b>두 자료 연결</b> __JOINKEY__ · 등급이 붙은 곳 <b>__EVALMATCHED__곳(__EVALRATE__%)</b>, 나머지는 「평가 이력 없음」</div>
-    <div><b>출처 ③</b> 공공데이터포털 · 국민건강보험공단_장기요양기관 시설별 상세정보 조회 (데이터 15058856) · 전화번호만 사용</div>
+    <div><b>출처 ③</b> 공공데이터포털 · 국민건강보험공단_장기요양기관 시설별 상세정보 조회 (데이터 15058856) · <b>조회 2026-10-14</b> · 전화번호만 사용</div>
     <div><b>전화번호</b> 기관코드로 연결해 <b>__TELMATCHED__곳(__TELRATE__%)</b>에 붙였습니다 · 받지 못한 곳은 비워 두었습니다 · 순위·정렬에는 쓰지 않습니다</div>
     <div><b>대상</b> __TYPES__ · 전국 <b>__COUNT__곳</b></div>
     <div><b>계산식</b> 요양보호사 1인당 어르신 수 = 정원 &divide; 요양보호사 수 (적을수록 앞)</div>
@@ -486,8 +494,20 @@ DATA.sido.forEach((s,i)=>{
 let expanded=false, current=[];
 const PAGE=10;
 
+/* 세종은 시·군·구 계층이 없다. 원본 주소의 둘째 어절이 곧 읍면동이라
+   그 값이 「시·군·구」 칸에 들어간다(고운동·조치원읍…). 값을 바꾸면 중앙값·순위까지
+   흔들리므로 데이터는 그대로 두고 **라벨만** 사실대로 바꾼다.
+   세종 23곳은 dong이 전부 비어 있어 「내 동네 먼저」 대상이 아니다. */
+const NO_SGG_SIDO = ['세종특별자치시'];
+function syncSggLabel(){
+  const s = $sido.value===''? '' : DATA.sido[+$sido.value];
+  document.getElementById('sgglabel').textContent =
+    NO_SGG_SIDO.includes(s) ? '읍 · 면 · 동' : '시 · 군 · 구';
+}
+
 function fillSgg(){
   const v=$sido.value;
+  syncSggLabel();
   $sgg.innerHTML='<option value="">전체</option>';
   if(v==='') return;
   (DATA.sigungu[DATA.sido[+v]]||[]).forEach(g=>{
@@ -686,9 +706,12 @@ function draw(){
   const med = MED[sidoName];
 
   // 같은 이름+주소가 이 지역에 두 번 이상 나오는지 미리 센다 (중복 등록 안내용)
+  // 주소 문자열까지 맞춰 보면 "…효행로20 (진안동, 2층)" 과 "…효행로20 2층 (진안동)" 처럼
+  // 같은 건물인데 표기만 다른 쌍을 놓친다. 같은 시·군·구 안이므로 **이름만**으로 센다.
+  // 전수 확인: 같은 시군구 내 동명 그룹은 2개뿐이고 둘 다 실제 중복 등록이라 오탐이 없다.
   const seen = new Map(), dupKeys = new Set();
   current.forEach(r=>{
-    const k = r[F.name]+'|'+r[F.addr];
+    const k = r[F.name];
     if(seen.has(k)) dupKeys.add(k); else seen.set(k, 1);
   });
 
@@ -712,8 +735,9 @@ function draw(){
     // 같은 이름·같은 주소가 두 번 나오는 경우가 있다. 원본에 기관코드가 둘로 등록된 것이라
     // 어느 쪽이 실제인지 우리가 판단할 수 없어 합치지 않았다. 대신 화면에서 설명한다.
     // 설명 없이 두면 보호자가 한 센터를 서로 다른 숫자로 두 번 보게 된다.
-    if(dupKeys.has(r[F.name]+'|'+r[F.addr])){
-      note += '<details class="new"><summary>같은 주소에 기관코드가 2개 등록돼 있어요 — 아래에 한 번 더 나옵니다</summary>'
+    if(dupKeys.has(r[F.name])){
+      // "아래에"라고 쓰면 짝이 위에 있는 카드에서 거짓말이 된다. 방향을 말하지 않는다.
+      note += '<details class="new"><summary>같은 시설이 기관코드 2개로 등록돼 있어요 — 이 지역 목록에 한 번 더 나옵니다</summary>'
         + '<p>원본 자료에 이 시설이 <b>기관코드 2개로 등록</b>되어 있어 정원·인력 신고값이 서로 다릅니다. '
         + '어느 쪽이 현재 상태인지는 자료만으로 알 수 없어 <b>합치지 않고 그대로 보여드립니다.</b> '
         + '기관에 직접 확인하세요.</p></details>';
@@ -728,7 +752,10 @@ function draw(){
     return '<li>'
       + '<p class="name"><span class="rank'+(r.rank<=3?' top':'')+'">'+r.rank+'위</span>'+esc(r[F.name])+'</p>'
       +   '<p class="where">'+esc(r[F.sigungu]+' '+r[F.addr])
-      +     (r[F.tel]? ' · <span class="telno">'+esc(r[F.tel])+'</span>' : '')+'</p>'
+      +     (r[F.tel]? ' · <span class="telno">'+esc(r[F.tel])+'</span>'
+      //  번호가 없는 76곳: 아이콘 말풍선은 hover/focus 전용이라 휴대폰에서 안 열린다.
+      //  선언한 사용자가 "폰으로 보는 보호자"이므로 글자로 적어 둔다.
+                      : ' · <span class="telno none">번호 비공개</span>')+'</p>'
       +   '<p class="cap">요양보호사 1명이 돌보는 어르신</p>'
       +   '<div class="big"><span class="num'+(good?' good':'')+'">'+fmt(ratio)+'</span>'
       +     '<span class="unit">명</span></div>'

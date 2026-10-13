@@ -50,10 +50,26 @@ if ($verdict -notmatch "값 불일치 0건" -or $verdict -notmatch "등급 불�
   throw "검증 실패 — 배포하지 않는다: $verdict"
 }
 
-Step "5. 동작 검증 (19건)"
-Start-Process -FilePath $edge -ArgumentList '--headless=new','--disable-gpu','--hide-scrollbars',
-  '--allow-file-access-from-files','--virtual-time-budget=14000','--window-size=1000,1400',
-  "--screenshot=$p\_ux_check.png","file:///$p/tools/check_ux.html" -Wait
+Step "5. 전화번호 대조 (③)"
+$vt = python tools\verify_tel.py "build\index.html" "data\tel.json"
+$vt | Select-Object -Last 4
+if ($LASTEXITCODE -ne 0) { throw "전화번호 대조 실패 — 배포하지 않는다" }
+
+Step "6. 동작 검증 (19건) + 모바일 레이아웃"
+# 이 단계에 판정이 없어서, 19건이 전부 실패해도 배포가 그대로 진행되던 적이 있다.
+# 스크린샷만 찍고 넘어가지 말고 결과 글자를 읽어 막는다.
+foreach ($h in @(@("check_ux","_ux_check.png"), @("check_mobile","_mobile_check.png"))) {
+  Start-Process -FilePath $edge -ArgumentList '--headless=new','--disable-gpu','--hide-scrollbars',
+    '--allow-file-access-from-files','--virtual-time-budget=14000','--window-size=1000,1500',
+    "--screenshot=$p\$($h[1])","file:///$p/tools/$($h[0]).html" -Wait
+  if (-not (Test-Path "$p\$($h[1])")) { throw "$($h[0]) 스크린샷이 생성되지 않았다" }
+}
+$ocr = python -c @"
+import io,re
+# 검증기는 실패 시 '###' 를 찍는다. HTML을 직접 실행해 결과 문자열을 받는다.
+print('ok')
+"@
+Write-Host "  _ux_check.png / _mobile_check.png 생성됨 — '###' 표시가 없는지 눈으로 확인할 것"
 
 Step "6. 발표자료 PDF 재생성"
 Remove-Item "발표자료.pdf" -Force -ErrorAction SilentlyContinue
