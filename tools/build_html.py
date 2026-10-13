@@ -8,9 +8,34 @@ import sys, json, os
 src = sys.argv[1] if len(sys.argv) > 1 else "data/day_care.json"
 out = sys.argv[2] if len(sys.argv) > 2 else "dist/돌봄밀도.html"
 
+# ── 법정 수가 (주야간보호 급여비용) ─────────────────────────────────────────
+# 주야간보호 비용은 기관마다 다르지 않고 공단이 고시하는 전국 공통 수가다.
+# 따라서 원본 데이터(15124763)에 금액 칸이 없어도 등급·이용시간만 고르면 계산된다.
+#
+# ※ 표가 비어 있으면 화면에 비용 UI가 아예 나오지 않는다(틀린 금액을 보여주지 않기 위해).
+#    공단 > 제도안내 > 급여비용 의 "주야간보호" 1일당 금액을 그대로 옮겨 적을 것.
+# 쓰는 값: 등급별 "재가급여 이용 월 한도액". 주야간보호 1일당 수가표가 아니라
+# 한 달에 쓸 수 있는 급여 총액의 상한이다. 기관마다 다르지 않고 등급으로만 정해진다.
+#
+# 검산(표 내부 정합성): 2026÷2025 = 8.95 / 11.89 / 2.86 / 2.85 / 2.71 / 2.88% — 표에 적힌 인상률과 일치.
+# 교차검증: 2025년 1등급 2,306,400원이 별도 출처(infopolicy.co.kr)와 일치.
+YEAR = "2026"   # "2025" 로 바꾸면 그 해 한도액으로 계산된다
+FEE = {
+    "source": "보건복지부·국민건강보험공단 — 등급별 재가급여 이용 월 한도액",
+    "asOf": YEAR + "년 기준",
+    "copayRate": 0.15,   # 일반 대상 본인부담률 15% (감경 대상은 다름 → 화면에 명시)
+    "limits": {
+        "2026": {"1등급": 2512900, "2등급": 2331200, "3등급": 1528200,
+                 "4등급": 1409700, "5등급": 1208900, "인지지원등급": 676320},
+        "2025": {"1등급": 2306400, "2등급": 2083400, "3등급": 1485700,
+                 "4등급": 1370600, "5등급": 1177000, "인지지원등급": 657400},
+    }[YEAR],
+}
+
 with open(src, encoding="utf-8") as f:
     data = json.load(f)
 
+data["fee"] = FEE if (FEE["asOf"] and FEE["limits"]) else None
 payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
 
 TEMPLATE = r"""<!DOCTYPE html>
@@ -158,6 +183,9 @@ TEMPLATE = r"""<!DOCTYPE html>
   }
   .bar b{font-size:19px;font-weight:800}
   .bar small.hint{display:block;margin-top:4px;font-size:var(--t-xs);color:var(--mute);font-weight:400;line-height:1.45}
+  .bar small.fee{display:block;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);
+                 font-size:var(--t-sm);color:var(--mute);font-weight:400;line-height:1.5}
+  .bar small.fee b{color:var(--ink);font-weight:700}
 
   /* 결과 — 카드 하나가 기관 하나. 넓으면 3열, 중간 2열, 휴대폰 1열 (시안 1c) */
   ol{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--s3)}
@@ -301,6 +329,13 @@ TEMPLATE = r"""<!DOCTYPE html>
     <label><input id="only" type="checkbox"> 중간값보다 적은 곳만</label>
     <button id="share" class="share" type="button" hidden>이 결과 링크 복사</button>
   </div>
+
+  <div class="opts" id="feeopts" hidden>
+    <label><input id="feeon" type="checkbox"> 비용 함께 보기</label>
+  </div>
+  <div class="pick" id="feepick" hidden>
+    <label><span>부모님 장기요양 등급</span><select id="grade"></select></label>
+  </div>
   </div>
 
   <div id="bar" class="bar">부모님이 계신 지역을 선택하세요.</div>
@@ -341,6 +376,9 @@ const $more = document.getElementById('more');
 const $q    = document.getElementById('q');
 const $dong = document.getElementById('dong');
 const $dongwrap = document.getElementById('dongwrap');
+const FEE = DATA.fee || null;
+const $feeopts=document.getElementById('feeopts'), $feeon=document.getElementById('feeon');
+const $feepick=document.getElementById('feepick'), $grade=document.getElementById('grade');
 const $only = document.getElementById('only');
 const $share= document.getElementById('share');
 const SAVE  = 'dolbom.pick';   // 마지막 선택 지역 (브라우저에만 저장)
@@ -362,6 +400,31 @@ function fillSgg(){
 }
 
 function fmt(n){ return Number(n).toFixed(1); }
+
+/* ── 비용 ───────────────────────────────────────────────────────────────
+   주야간보호 급여비용은 기관이 아니라 등급·이용시간으로 정해지는 전국 공통 수가라,
+   기관마다 다르지 않다. 그래서 카드가 아니라 기준선 바 아래에 한 줄로 둔다.
+   수가표가 없으면(빌드 설정이 비어 있으면) 이 기능 자체가 화면에 안 나온다. */
+function initFee(){
+  if(!FEE) return;
+  Object.keys(FEE.limits).forEach(g=>{
+    const o=document.createElement('option'); o.value=g; o.textContent=g; $grade.appendChild(o);
+  });
+  $grade.value='4등급';            // 주야간보호 이용이 가장 많은 등급
+  $feeopts.hidden=false;
+}
+function feeLine(){
+  if(!FEE || !$feeon.checked) return '';
+  const limit=FEE.limits[$grade.value];
+  if(!limit) return '';
+  const copay=Math.round(limit*FEE.copayRate);
+  return '<small class="fee"><b>'+esc($grade.value)+'</b> 재가급여 월 한도 <b>'+limit.toLocaleString()+'원</b>'
+    + ' · 한도를 다 쓰면 본인부담 <b>약 '+Math.round(copay/1000).toLocaleString()+'천원</b>'
+    + '<br>한 달에 쓸 수 있는 <b>상한</b>이고, 주야간보호·방문요양 등을 <b>합쳐서</b> 쓰는 금액입니다. '
+    + '등급으로 정해지므로 <b>기관마다 같습니다</b>. 일반 대상 본인부담 '+(FEE.copayRate*100)+'% 기준이며, '
+    + '감경 대상은 비율이 다르고 식재료비·간식비 등 비급여는 빠져 있습니다. '
+    + '출처 '+esc(FEE.source)+' · '+esc(FEE.asOf)+'</small>';
+}
 
 /* 읍면동 목록 — 시·군·구를 고른 뒤에만 보인다. 좌표가 없어 거리는 못 재지만
    같은 동 기관을 먼저 보여주는 "내 동네 먼저"는 데이터 1종 안에서 가능하다 */
@@ -422,7 +485,8 @@ function render(){
     + (cond.length? ' 중 <b>'+cond.join(' · ')+' '+current.length+'곳</b>' : '')
     + ' · '+sidoName+' 중간값 <b>'+fmt(med)+'명</b>'
     + (dg? ' · <b>'+esc(dg)+'</b> '+current.filter(r=>r[F.dong]===dg).length+'곳 먼저' : '')
-    + '<small class="hint">중간값 = 이 지역 기관을 줄 세웠을 때 한가운데 값 (개원 1년 미만 제외)</small>';
+    + '<small class="hint">중간값 = 이 지역 기관을 줄 세웠을 때 한가운데 값 (개원 1년 미만 제외)</small>'
+    + feeLine();
 
   expanded=false;
   draw();
@@ -537,8 +601,13 @@ $sgg .addEventListener('change', ()=>{ fillDong(); render(); savePick(); setHash
 $dong.addEventListener('change', ()=>{ render(); savePick(); setHash(); });
 $q   .addEventListener('input', render);
 $only.addEventListener('change', render);
+if(FEE){
+  $feeon.addEventListener('change', ()=>{ $feepick.hidden=!$feeon.checked; render(); });
+  $grade.addEventListener('change', render);
+}
 $share.addEventListener('click', share);
 $more.addEventListener('click',()=>{ expanded=true; draw(); window.scrollBy(0,80); });
+initFee();
 if(!fromHash()) restorePick();   // 링크에 지역이 있으면 그게 우선, 없으면 마지막 선택
 </script>
 </body>
