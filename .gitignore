@@ -27,3 +27,7 @@ _남은작업*.txt
 _live.html
 _j*.py
 _*.png
+
+# 자체 검사용 임시 산출물 (검사 결과는 PLAN.md 6번에 적는다)
+_judge/
+data/_probe/
