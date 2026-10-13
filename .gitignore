@@ -14,3 +14,11 @@ data/_apikey.txt
 apikey.txt
 *apikey*.txt
 *.key
+
+# 작업 임시파일
+_preview.html
+_shots/
+_msg.txt
+data/_dc_test.json
+data/_tel_fetch.*
+_ux_check.png
