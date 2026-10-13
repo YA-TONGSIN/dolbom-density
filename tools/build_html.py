@@ -19,7 +19,7 @@ TEMPLATE = r"""<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>주야간보호센터 돌봄 밀도 비교 — 요양보호사 1인당 어르신 수로 전국 비교</title>
-<meta name="description" content="부모님 동네 주야간보호센터를 요양보호사 1인당 어르신 수로 비교합니다. 공공데이터 1종(국민건강보험공단 장기요양기관 시설별 현황), 전국 5,346곳, 시·도 중앙값과 나란히 표시.">
+<meta name="description" content="부모님 동네 주야간보호센터를 요양보호사 1인당 어르신 수로 비교합니다. 공공데이터 1종(국민건강보험공단 장기요양기관 시설별 현황), 전국 5,346곳, 시·도 중간값과 나란히 표시.">
 <meta property="og:title" content="주야간보호센터 돌봄 밀도 비교">
 <meta property="og:description" content="요양보호사 한 명이 어르신 몇 분을 돌보는지로 전국 주야간보호센터를 비교합니다.">
 <meta property="og:type" content="website">
@@ -146,7 +146,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   button.share:hover{background:var(--line)}
   button.share:active{transform:scale(.97)}
 
-  /* 지역 기준선 — 떠 있는 흰 카드, 스크롤해도 남는다. 중앙값 수치는 화면에서 여기 한 곳에만 */
+  /* 지역 기준선 — 떠 있는 흰 카드, 스크롤해도 남는다. 중간값 수치는 화면에서 여기 한 곳에만 */
   .bar{
     position:sticky;top:var(--s2);z-index:5;
     padding:var(--s3) var(--s4);border-radius:var(--r-sm);
@@ -154,6 +154,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     font-size:var(--t-base);line-height:1.5;backdrop-filter:saturate(1.2);
   }
   .bar b{font-size:19px;font-weight:800}
+  .bar small.hint{display:block;margin-top:4px;font-size:var(--t-xs);color:var(--mute);font-weight:400;line-height:1.45}
 
   /* 결과 — 카드 하나가 기관 하나 */
   ol{list-style:none;padding:0;display:grid;row-gap:var(--s3)}
@@ -179,7 +180,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   .unit{font-size:var(--t-sm);color:var(--mute);font-weight:600}
   .calc{font-size:var(--t-sm);color:var(--mute)}
 
-  /* 판정 배지 — 채움형 알약. 중앙값 수치는 위 기준선에 있으므로 여기선 방향만 */
+  /* 판정 배지 — 채움형 알약. 중간값 수치는 위 기준선에 있으므로 여기선 방향만 */
   .chip{
     display:inline-block;padding:7px 14px;border-radius:999px;
     font-size:var(--t-sm);font-weight:700;line-height:1.3;
@@ -201,7 +202,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     .unit{font-size:var(--t-sm)}
   }
 
-  /* 중앙값 대비 막대 — 가운데 눈금이 해당 시·도 중앙값. 수치는 안 적고 "중앙값" 한 단어만 */
+  /* 중간값 대비 막대 — 가운데 눈금이 해당 시·도 중간값. 수치는 안 적고 "중간값" 한 단어만 */
   .meter{max-width:420px;display:grid;row-gap:4px}
   .meter .track{position:relative;height:10px;background:var(--field);border-radius:999px}
   .meter .fill{height:100%;border-radius:999px;background:var(--mute)}
@@ -289,7 +290,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   </div>
 
   <div class="opts">
-    <label><input id="only" type="checkbox"> 중앙값보다 적은 곳만</label>
+    <label><input id="only" type="checkbox"> 중간값보다 적은 곳만</label>
     <button id="share" class="share" type="button" hidden>이 결과 링크 복사</button>
   </div>
   </div>
@@ -304,14 +305,14 @@ TEMPLATE = r"""<!DOCTYPE html>
     <div><b>자료 기준일</b> __BASEDATE__ · <b>갱신 주기</b> __CYCLE__</div>
     <div><b>대상</b> __TYPES__ · 전국 <b>__COUNT__곳</b></div>
     <div><b>계산식</b> 요양보호사 1인당 어르신 수 = 정원 &divide; 요양보호사 수 (적을수록 앞)</div>
-    <div><b>중앙값 기준</b> __MEDIANNOTE__ (개원 __NEWCOUNT__곳 제외)</div>
+    <div><b>중간값 기준</b> __MEDIANNOTE__ (개원 __NEWCOUNT__곳 제외)</div>
     <div class="warn">
       이 숫자는 <b>돌봄 품질을 보증하지 않습니다.</b> 정원은 실제 이용 인원이 아니라 등록 가능한 최대 인원이고,
       요양보호사 수는 기관이 신고한 값입니다. <b>비교의 출발점</b>으로만 사용하시고,
       실제 선택 전에는 기관에 직접 확인하시기 바랍니다.
       <br><br>
       <b>개원 1년 미만 기관은 따로 표시했습니다.</b> 전국 자료로 확인해 보면 개원 2개월 미만 기관의
-      1인당 어르신 수 중앙값은 11.0명, 10년 이상 된 기관은 6.2명입니다.
+      1인당 어르신 수 중간값은 11.0명, 10년 이상 된 기관은 6.2명입니다.
       갓 문을 연 곳이 불리하게 보이는 것은 운영이 자리 잡는 중이기 때문이지 돌봄이 나쁘다는 뜻이 아닙니다.
     </div>
   </footer>
@@ -382,28 +383,29 @@ function render(){
     $bar.innerHTML = where+' 주야간보호센터 '+region.length+'곳 중 '
       + (q? '<b>\''+esc($q.value.trim())+'\'</b>이 들어간 이름' : '')
       + (q&&$only.checked? '이면서 ' : '')
-      + ($only.checked? '중앙값보다 적은 곳' : '')
+      + ($only.checked? '중간값보다 적은 곳' : '')
       + '이 없습니다.';
     $list.innerHTML='<li class="empty">'+($only.checked? '체크를 풀거나 ' : '')+(q? '검색어를 지우거나 ' : '')+'다른 지역을 골라 보세요.</li>';
     return;
   }
-  const cond=[]; if(q) cond.push('\''+esc($q.value.trim())+'\''); if($only.checked) cond.push('중앙값보다 적은 곳');
+  const cond=[]; if(q) cond.push('\''+esc($q.value.trim())+'\''); if($only.checked) cond.push('중간값보다 적은 곳');
   $bar.innerHTML = where+' 주야간보호센터 <b>'+region.length+'곳</b>'
     + (cond.length? ' 중 <b>'+cond.join(' · ')+' '+current.length+'곳</b>' : '')
-    + ' · '+sidoName+' 중앙값 <b>'+fmt(med)+'명</b>';
+    + ' · '+sidoName+' 중간값 <b>'+fmt(med)+'명</b>'
+    + '<small class="hint">중간값 = 이 지역 기관을 줄 세웠을 때 한가운데 값 (개원 1년 미만 제외)</small>';
 
   expanded=false;
   draw();
 }
 
 function meter(ratio, med, good){
-  // 가운데(50%)가 중앙값. 중앙값의 2배를 끝으로 잡아 채움 길이를 정한다.
-  // 수치 라벨은 달지 않는다 — 값은 큰 숫자에, 중앙값은 상단 기준선에 이미 있다.
+  // 가운데(50%)가 중간값. 중간값의 2배를 끝으로 잡아 채움 길이를 정한다.
+  // 수치 라벨은 달지 않는다 — 값은 큰 숫자에, 중간값은 상단 기준선에 이미 있다.
   const pct = Math.max(4, Math.min(100, ratio/(med*2)*100));
-  return '<div class="meter" title="가운데 눈금이 '+fmt(med)+'명(중앙값)"><div class="track">'
+  return '<div class="meter" title="가운데 눈금이 '+fmt(med)+'명(중간값)"><div class="track">'
     + '<div class="fill'+(good?' good':'')+'" style="width:'+pct.toFixed(1)+'%"></div>'
     + '<div class="tick"></div></div>'
-    + '<div class="lab"><span>적음</span><span>▲ 중앙값</span><span>많음</span></div>'
+    + '<div class="lab"><span>적음</span><span>▲ 중간값</span><span>많음</span></div>'
     + '</div>';
 }
 
@@ -453,8 +455,8 @@ function draw(){
     if(r[F.rehab]>0) tags.push('물리·작업치료사 '+r[F.rehab]+'명');
     if(r[F.social]>0) tags.push('사회복지사 '+r[F.social]+'명');
 
-    // 중앙값 수치는 상단 기준선에 한 번만. 카드에서는 방향만 말한다 (중복 제거)
-    const cmp = good ? '중앙값보다 적습니다' : '중앙값보다 많습니다';
+    // 중간값 수치는 상단 기준선에 한 번만. 카드에서는 방향만 말한다 (중복 제거)
+    const cmp = good ? '중간값보다 적습니다' : '중간값보다 많습니다';
 
     const note = r[F.isNew]
       ? '<p class="new"><b>'+esc(r[F.since])+' 지정 · 개원 1년 미만</b>입니다. '
@@ -512,7 +514,7 @@ html = (TEMPLATE
         .replace("__CYCLE__", m["cycle"])
         .replace("__TYPES__", m["types"])
         .replace("__COUNT__", f"{m['count']:,}")
-        .replace("__MEDIANNOTE__", m["medianNote"])
+        .replace("__MEDIANNOTE__", m["medianNote"].replace("중앙값", "중간값"))   # 화면 용어는 "중간값"
         .replace("__NEWCOUNT__", f"{m['newCount']:,}"))
 
 os.makedirs(os.path.dirname(out), exist_ok=True)
