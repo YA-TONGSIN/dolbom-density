@@ -56,19 +56,22 @@
   .slide.cover>:not(.hero3d){position:relative;z-index:1}
   /* 고정 테두리 한 겹 — 파문이 사라진 순간에도 형태가 남는다 */
   .hero3d::before{content:"";position:absolute;inset:6%;border:1px solid rgba(255,255,255,.17);border-radius:50%}
-  .hero3d .ring{position:absolute;inset:0;border:2px solid rgba(255,255,255,.45);border-radius:50%;
-                animation:ripple 9s cubic-bezier(.25,.6,.3,1) infinite}
+  /* 주기 5초·간격 1.25초 — 1.25초마다 새 파문이 생겨 늘 움직임이 보인다.
+     9초 주기일 때는 대부분의 순간 불투명도가 0.05라 멈춘 것처럼 보였다. */
+  .hero3d .ring{position:absolute;inset:0;border:2.5px solid rgba(255,255,255,.55);border-radius:50%;
+                animation:ripple 5s cubic-bezier(.22,.6,.3,1) infinite}
   .hero3d .core{position:absolute;inset:37%;border-radius:50%;
-                background:rgba(255,255,255,.15);animation:breathe 6.5s ease-in-out infinite}
-  .hero3d .core::after{content:"";position:absolute;inset:26%;border-radius:50%;background:rgba(255,255,255,.22)}
+                background:rgba(255,255,255,.17);animation:breathe 4s ease-in-out infinite}
+  .hero3d .core::after{content:"";position:absolute;inset:26%;border-radius:50%;background:rgba(255,255,255,.26)}
   @keyframes ripple{
-    0%  {transform:scale(.26);opacity:0}
-    14% {opacity:.8}
-    100%{transform:scale(1.12);opacity:0}
+    0%  {transform:scale(.25);opacity:0}
+    12% {opacity:.9}
+    70% {opacity:.45}
+    100%{transform:scale(1.16);opacity:0}
   }
   @keyframes breathe{
-    0%,100%{transform:scale(1);opacity:.9}
-    50%    {transform:scale(1.07);opacity:1}
+    0%,100%{transform:scale(1);opacity:.85}
+    50%    {transform:scale(1.13);opacity:1}
   }
 
   /* ===== 내용 등장 — 슬라이드가 켜질 때 아래에서 올라오며 나타난다 ========== */
@@ -325,7 +328,7 @@
     const h=document.createElement('div');
     h.className='hero3d'; h.setAttribute('aria-hidden','true');
     let html='';
-    for(let i=0;i<4;i++) html+='<i class="ring" style="animation-delay:'+(i*2.25)+'s"></i>';
+    for(let i=0;i<4;i++) html+='<i class="ring" style="animation-delay:'+(i*1.25)+'s"></i>';
     h.innerHTML=html+'<i class="core"></i>';
     s.appendChild(h);
   });
