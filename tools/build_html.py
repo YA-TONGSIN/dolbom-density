@@ -32,31 +32,36 @@ TEMPLATE = r"""<!DOCTYPE html>
      크기 : 황금비 1.618. 본문 17 → 27 → 44, 아래로 17÷1.618 ≈ 11.
      여백 : 피보나치 5·8·13·21·34·55 (황금비의 정수 근사).
      ============================================================== */
+  /* 토스·당근 계열 소비자 앱 문법: 연회색 바탕 위 흰 카드, 테두리 대신 여백과 그림자로 구분 */
   :root{
-    --ink:#16243f;         /* 글자 — 짙은 남색 */
-    --mute:#5a6576;        /* 보조 글자 — 흰 바탕 대비 6:1, 50대 사용자 기준 */
-    --accent:#0a6b5c;      /* 강조 1색 — 틸 */
-    --accent-deep:#07564a; /* 강조색 짙은 단계 (호버·테두리) */
-    --accent-wash:#e8f1ee; /* 강조색 가장 옅은 단계 (배지 바탕) */
-    --soft:#f4f7f7;        /* 면 */
-    --line:#dfe6e7;        /* 구분선 */
+    --ink:#191f28;         /* 글자 — 거의 검정 (토스 grey900 계열) */
+    --mute:#4e5968;        /* 보조 글자 — 흰 바탕 대비 7:1 */
+    --accent:#0a6b5c;      /* 강조 1색 — 틸 (브랜드색 하나) */
+    --accent-deep:#07564a; /* 강조색 짙은 단계 (호버) */
+    --accent-wash:#e6f2ef; /* 강조색 가장 옅은 단계 (배지·포커스 링) */
+    --bg:#f2f4f6;          /* 페이지 바탕 — 연회색 */
+    --card:#ffffff;        /* 카드 */
+    --field:#f2f4f6;       /* 입력창 채움 (테두리 없음) */
+    --soft:#f2f4f6;        /* 면 (호환) */
+    --line:#e5e8eb;        /* 아주 옅은 구분 (최소 사용) */
+    --shadow:0 2px 12px rgba(25,31,40,.06);
 
     /* 가독성 바닥: 화면에 보이는 UI 글자는 15px 아래로 내려가지 않는다 (사용자 50대). 13은 푸터용 */
     --t-xs:13px; --t-sm:15px; --t-base:17px; --t-md:21px; --t-lg:27px; --t-xl:44px;
     --s1:5px; --s2:8px; --s3:13px; --s4:21px; --s5:34px; --s6:55px;
-    --r:12px; --r-sm:9px;
+    --r:20px; --r-sm:14px;  /* 둥근 모서리 — 카드 20, 입력·버튼 14 */
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
   /* 세로 리듬은 그리드 gap 하나로만 만든다 — 요소 기본 마진은 전부 제거 */
   p,h1,h2,h3,ol,ul,figure,blockquote{margin:0}
   body{
-    background:#fff; color:var(--ink);
-    font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,sans-serif;
+    background:var(--bg); color:var(--ink);
+    font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo",
+                "Malgun Gothic","맑은 고딕",system-ui,sans-serif;
     font-size:var(--t-base); line-height:1.55;
     -webkit-text-size-adjust:100%;
   }
-  body::before{content:"";display:block;height:4px;background:var(--accent)}
 
   /* 전체 세로 리듬을 그리드 gap 하나로 통제한다 (요소별 margin 사용 안 함) */
   .wrap{
@@ -66,71 +71,73 @@ TEMPLATE = r"""<!DOCTYPE html>
   }
   .wrap>*{margin:0}
 
-  .head{display:grid;row-gap:var(--s2)}
-  .eyebrow{font-size:var(--t-xs);color:var(--accent);font-weight:700;letter-spacing:.02em}
-  h1{font-size:var(--t-lg);letter-spacing:-0.02em;line-height:1.25;font-weight:700}
+  .head{display:grid;row-gap:var(--s2);padding:var(--s2) var(--s1) 0}
+  .eyebrow{font-size:var(--t-xs);color:var(--mute);font-weight:700;letter-spacing:.01em}
+  h1{font-size:28px;letter-spacing:-0.03em;line-height:1.25;font-weight:800}
   .lede{font-size:var(--t-base);color:var(--mute);line-height:1.5}
 
-  /* 입력 영역 — 고르는 곳과 결과의 경계 */
+  /* 입력 영역 — 흰 카드. 테두리 없이 바탕색 대비와 그림자로 띄운다 */
   .panel{
-    background:var(--soft);border:1px solid var(--line);border-radius:var(--r);
-    padding:var(--s3);display:grid;row-gap:var(--s3);
+    background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);
+    padding:var(--s4);display:grid;row-gap:var(--s3);
   }
   .pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--s3)}
   .pick label,.find label{display:grid;row-gap:var(--s1);min-width:0}
   .pick span,.find span{font-size:var(--t-sm);color:var(--ink);font-weight:700}
+  /* 입력창 — 회색 채움, 테두리 없음 (토스 문법) */
   select,.find input{
-    width:100%;padding:var(--s3) 12px;font-size:var(--t-base);font-family:inherit;
-    color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:var(--r-sm);
+    width:100%;padding:15px 16px;font-size:var(--t-base);font-family:inherit;font-weight:600;
+    color:var(--ink);background:var(--field);border:2px solid transparent;border-radius:var(--r-sm);
   }
-  select:focus,.find input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash)}
+  .find input::placeholder{color:#8b95a1;font-weight:400}
+  select:focus,.find input:focus{outline:none;background:#fff;border-color:var(--accent)}
   .find{display:grid}
 
   .opts{display:grid;grid-template-columns:1fr auto;gap:var(--s2) var(--s3);align-items:center;font-size:var(--t-base)}
   .opts label{display:flex;align-items:center;gap:var(--s2);cursor:pointer}
   .opts input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
   button.share{
-    padding:var(--s2) var(--s3);font-size:var(--t-sm);font-family:inherit;font-weight:700;
-    color:var(--accent-deep);background:#fff;border:1.5px solid var(--line);
-    border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;
+    padding:11px 16px;font-size:var(--t-sm);font-family:inherit;font-weight:700;
+    color:var(--ink);background:var(--field);border:0;
+    border-radius:999px;cursor:pointer;white-space:nowrap;
   }
-  button.share:hover{border-color:var(--accent)}
+  button.share:hover{background:#e8ebee}
 
-  /* 지역 기준선 — 스크롤해도 남도록 고정. 중앙값 수치는 화면에서 여기 한 곳에만 둔다 */
+  /* 지역 기준선 — 떠 있는 흰 카드, 스크롤해도 남는다. 중앙값 수치는 화면에서 여기 한 곳에만 */
   .bar{
-    position:sticky;top:0;z-index:5;
-    padding:var(--s3);border:1px solid var(--line);border-left:4px solid var(--accent);
-    border-radius:var(--r-sm);background:#fbfdfd;font-size:var(--t-base);line-height:1.5;
+    position:sticky;top:var(--s2);z-index:5;
+    padding:var(--s3) var(--s4);border-radius:var(--r-sm);
+    background:var(--card);box-shadow:var(--shadow);font-size:var(--t-base);line-height:1.5;
   }
-  .bar b{font-size:19px}
+  .bar b{font-size:19px;font-weight:800}
 
-  ol{list-style:none;padding:0;display:grid;row-gap:0}
-  li{border-bottom:1px solid var(--line);padding:var(--s4) 0}
-  li:first-child{border-top:1px solid var(--line)}
+  /* 결과 — 카드 하나가 기관 하나 */
+  ol{list-style:none;padding:0;display:grid;row-gap:var(--s3)}
+  li{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:var(--s4)}
 
   .row{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:var(--s3);align-items:start}
   .rank{
-    width:30px;height:30px;border-radius:50%;background:#fff;border:1.5px solid var(--line);
-    display:grid;place-items:center;margin-top:2px;
-    font-size:var(--t-sm);font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums;
+    width:30px;height:30px;border-radius:50%;background:var(--field);
+    display:grid;place-items:center;margin-top:3px;
+    font-size:var(--t-xs);font-weight:800;color:var(--mute);font-variant-numeric:tabular-nums;
   }
   .body{display:grid;row-gap:10px;min-width:0}
   .name{font-size:var(--t-md);font-weight:700;word-break:keep-all;line-height:1.3}
   .where{font-size:var(--t-sm);color:var(--mute);word-break:keep-all;line-height:1.5}
 
   .big{display:flex;align-items:baseline;gap:8px}
-  .num{font-size:36px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+  .num{font-size:38px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-0.03em}
   .num.good{color:var(--accent)}
-  .unit{font-size:var(--t-sm);color:var(--mute)}
+  .unit{font-size:var(--t-sm);color:var(--mute);font-weight:600}
   .calc{font-size:var(--t-sm);color:var(--mute)}
 
-  /* 판정 배지 — 중앙값 수치는 위 기준선에 있으므로 여기선 방향만 말한다 */
+  /* 판정 배지 — 채움형 알약. 중앙값 수치는 위 기준선에 있으므로 여기선 방향만 */
   .chip{
-    display:inline-block;padding:6px 14px;border-radius:999px;
+    display:inline-block;padding:7px 14px;border-radius:999px;
     font-size:var(--t-sm);font-weight:700;line-height:1.3;
-    background:var(--soft);color:var(--ink);border:1px solid var(--line);
+    background:var(--field);color:var(--ink);
   }
-  .chip.good{background:var(--accent-wash);color:var(--accent-deep);border-color:#cfe3dd}
+  .chip.good{background:var(--accent-wash);color:var(--accent-deep)}
 
   /* 넓은 화면 — 좌:우 = 1.618 : 1 (황금분할) */
   @media (min-width:600px){
@@ -141,13 +148,13 @@ TEMPLATE = r"""<!DOCTYPE html>
     .name{grid-area:name}.where{grid-area:where}.calc{grid-area:calc}.meter{grid-area:meter}
     .verdict{grid-area:verdict}.new{grid-area:note}.tags{grid-area:tags}.act{grid-area:act}
     .big{grid-area:big;flex-direction:column;align-items:flex-end;gap:0;text-align:right}
-    .num{font-size:var(--t-xl)}
+    .num{font-size:48px}
     .unit{font-size:var(--t-sm)}
   }
 
   /* 중앙값 대비 막대 — 가운데 눈금이 해당 시·도 중앙값. 수치는 안 적고 "중앙값" 한 단어만 */
   .meter{max-width:420px;display:grid;row-gap:4px}
-  .meter .track{position:relative;height:10px;background:var(--soft);border:1px solid var(--line);border-radius:999px}
+  .meter .track{position:relative;height:10px;background:var(--field);border-radius:999px}
   .meter .fill{height:100%;border-radius:999px;background:var(--mute)}
   .meter .fill.good{background:var(--accent)}
   .meter .tick{position:absolute;left:50%;top:-6px;bottom:-6px;width:2px;background:var(--ink);border-radius:1px}
@@ -159,33 +166,34 @@ TEMPLATE = r"""<!DOCTYPE html>
   .tags i{font-style:normal}
 
   .new{
-    font-size:var(--t-sm);padding:var(--s3);border-radius:var(--r-sm);
-    background:var(--soft);border:1px solid var(--line);color:var(--ink);line-height:1.65;
+    font-size:var(--t-sm);padding:var(--s3) 15px;border-radius:var(--r-sm);
+    background:var(--field);color:var(--ink);line-height:1.65;
   }
   .new b{font-weight:700}
 
-  .act{display:grid;row-gap:var(--s2);justify-items:start}
+  /* 행동 — 주 버튼은 크고 둥글게 (높이 52), 보조는 글자 링크 */
+  .act{display:grid;row-gap:var(--s2);justify-items:start;padding-top:var(--s1)}
   a.go{
-    display:inline-block;padding:var(--s3) var(--s4);font-size:var(--t-base);font-weight:700;
+    display:inline-block;padding:15px 24px;font-size:var(--t-base);font-weight:700;
     color:#fff;background:var(--accent);border-radius:var(--r-sm);text-decoration:none;
   }
   a.go:hover{background:var(--accent-deep)}
-  a.portal{font-size:var(--t-sm);color:var(--mute);text-decoration:underline;text-underline-offset:3px;word-break:keep-all}
+  a.portal{font-size:var(--t-sm);color:var(--mute);font-weight:600;text-decoration:none;word-break:keep-all}
+  a.portal::after{content:" ›";font-weight:800}
   a.portal:hover{color:var(--accent-deep)}
 
   .more{
-    width:100%;padding:var(--s3);font-size:16px;font-family:inherit;font-weight:700;
-    color:var(--accent-deep);background:#fff;border:1.5px solid var(--line);
+    width:100%;padding:16px;font-size:var(--t-base);font-family:inherit;font-weight:700;
+    color:var(--ink);background:var(--card);border:0;box-shadow:var(--shadow);
     border-radius:var(--r-sm);cursor:pointer;
   }
-  .more:hover{border-color:var(--accent)}
+  .more:hover{background:#fafbfc}
   [hidden]{display:none !important}
-  .empty{padding:var(--s5) 0;color:var(--mute);border:0}
+  .empty{padding:var(--s5) 0;color:var(--mute);text-align:center;box-shadow:none;background:transparent}
 
-  footer{padding-top:var(--s4);border-top:1px solid var(--line);
-         font-size:14px;color:var(--mute);line-height:1.7;display:grid;row-gap:2px}
+  footer{padding:var(--s3) var(--s1) 0;font-size:14px;color:var(--mute);line-height:1.7;display:grid;row-gap:2px}
   footer b{color:var(--ink)}
-  .warn{margin-top:var(--s2);padding:var(--s3);background:var(--soft);border-radius:var(--r-sm);line-height:1.7;font-size:var(--t-sm)}
+  .warn{margin-top:var(--s2);padding:var(--s3) 15px;background:var(--card);border-radius:var(--r-sm);line-height:1.7;font-size:var(--t-sm);box-shadow:var(--shadow)}
 
   @media (max-width:480px){
     .wrap{padding:var(--s3) var(--s3) var(--s5);row-gap:var(--s3)}
@@ -194,7 +202,8 @@ TEMPLATE = r"""<!DOCTYPE html>
     .num{font-size:34px}
     .rank{width:26px;height:26px;font-size:12px}
     .row{column-gap:var(--s2)}
-    li{padding:var(--s3) 0}
+    li{padding:var(--s3) 15px}
+    .panel{padding:var(--s3) 15px}
     .opts{grid-template-columns:1fr}
     a.go,button.share{width:100%;text-align:center}
     .act{justify-items:stretch}
