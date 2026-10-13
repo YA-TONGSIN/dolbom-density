@@ -168,9 +168,13 @@ TEMPLATE = r"""<!DOCTYPE html>
   li:hover{box-shadow:var(--shadow-lift);transform:translateY(-1px)}
 
   /* 카드 안 구성(시안): N위 + 기관명 → 주소 → "요양보호사 1명이 돌보는 어르신" → 큰 숫자 → 근거 → 막대 → 배지 → 인력 → 행동 */
-  .row{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;align-items:baseline}
+  /* 카드 높이는 같은 줄에서 맞춰지고(그리드 stretch), 버튼은 아래로 밀어 줄마다 같은 높이에 선다 */
+  li{display:grid}
+  .row{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);
+       column-gap:10px;align-items:baseline;height:100%}
   .rank{font-size:var(--t-sm);font-weight:800;color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
-  .body{display:grid;row-gap:8px;min-width:0;grid-column:1 / -1}
+  .body{display:flex;flex-direction:column;gap:8px;min-width:0;grid-column:1 / -1;height:100%}
+  .body>.act{margin-top:auto}
   .name{font-size:var(--t-md);font-weight:700;word-break:keep-all;line-height:1.3}
   .where{font-size:var(--t-sm);color:var(--mute);word-break:keep-all;line-height:1.5}
   .cap{font-size:var(--t-sm);color:var(--mute);margin-top:4px}
@@ -211,11 +215,14 @@ TEMPLATE = r"""<!DOCTYPE html>
   .tags i{font-style:normal;color:var(--ink)}
   .tags b{font-weight:700;color:var(--mute);margin-right:6px}
 
-  .new{
-    font-size:var(--t-sm);padding:var(--s3) 15px;border-radius:var(--r-sm);
-    background:var(--field);color:var(--ink);line-height:1.65;
-  }
-  .new b{font-weight:700}
+  /* 개원 1년 미만 안내 — 접힌 한 줄(summary), 누르면 전문 */
+  .new{font-size:var(--t-sm);border-radius:var(--r-sm);background:var(--soft);color:var(--ink);line-height:1.55}
+  .new summary{padding:10px 13px;cursor:pointer;font-weight:700;list-style:none;display:flex;gap:8px;align-items:flex-start}
+  .new summary::-webkit-details-marker{display:none}
+  .new summary::before{content:"ⓘ";flex:0 0 auto;color:var(--mute)}
+  .new[open] summary::before{content:"ⓘ"}
+  .new p{padding:0 13px 12px 36px;color:var(--mute);line-height:1.65}
+  .new b{font-weight:700;color:var(--ink)}
 
   /* 행동 — 주 버튼은 크고 둥글게 (높이 52), 보조는 글자 링크 */
   .act{display:grid;row-gap:var(--s2);justify-items:stretch;padding-top:var(--s1)}
@@ -483,10 +490,11 @@ function draw(){
     // 중간값 수치는 상단 기준선에 한 번만. 카드에서는 방향만 말한다 (중복 제거)
     const cmp = good ? '중간값보다 적습니다' : '중간값보다 많습니다';
 
+    // 개원 1년 미만 안내 — 카드 맨 아래, 한 줄로 접어 두고 누르면 전문. 버튼 높이를 흔들지 않기 위해
     const note = r[F.isNew]
-      ? '<p class="new"><b>'+esc(r[F.since])+' 지정 · 개원 1년 미만</b>입니다. '
-        + '문 연 지 얼마 안 된 곳은 정원은 인가받은 최대치인데 인력은 채워지는 중이라 '
-        + '이 숫자가 <b>실제보다 나쁘게</b> 나옵니다. 숫자만으로 판단하지 마세요.</p>'
+      ? '<details class="new"><summary>'+esc(r[F.since])+' 지정 · 개원 1년 미만 — 숫자가 실제보다 나쁘게 나올 수 있어요</summary>'
+        + '<p>문 연 지 얼마 안 된 곳은 정원은 인가받은 최대치인데 인력은 채워지는 중이라 '
+        + '이 숫자가 <b>실제보다 나쁘게</b> 나옵니다. 숫자만으로 판단하지 마세요.</p></details>'
       : '';
 
     const q=encodeURIComponent(r[F.name]+' '+r[F.sigungu]);
@@ -502,8 +510,8 @@ function draw(){
       +   meter(ratio, med, good)
       +   '<p class="verdict"><span class="chip'+(good?' good':'')+'">'+cmp+'</span>'
       +     (($dong.value && r[F.dong]===$dong.value)? '<span class="chip near">내 동네</span>' : '')+'</p>'
-      +   note
       +   '<p class="tags"><b>인력</b> <i>'+tags.join(' · ')+'</i></p>'
+      +   note
       +   '<div class="act">'
       +   '<a class="go" target="_blank" rel="noopener noreferrer" '
       +     'href="https://search.naver.com/search.naver?query='+q+'">전화번호 찾아보기</a>'
