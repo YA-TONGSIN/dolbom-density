@@ -10,12 +10,14 @@
   :root{
     --ink:#191f28; --accent:#0a6b5c; --accent-deep:#07564a; --accent-wash:#e6f2ef;
     --line:#e5e8eb; --mute:#4e5968; --soft:#f2f4f6;
+    --bg:#f2f4f6; --card:#ffffff; --shadow:0 4px 24px rgba(25,31,40,.07);
     --u:1vh; --w:1vw;
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
-  body{background:#fff;color:var(--ink);overflow:hidden;
-       font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,sans-serif}
+  body{background:var(--bg);color:var(--ink);overflow:hidden;
+       font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo",
+                   "Malgun Gothic","맑은 고딕",system-ui,sans-serif}
 
   /* ===== 배경: 천천히 도는 3D 와이어프레임 큐브 패턴 =====================
      읽기를 방해하지 않는 것이 1순위라 선만 남기고 투명도를 매우 낮췄다.
@@ -43,50 +45,69 @@
          position:relative;z-index:1}          /* 배경 위에 올린다 */
   .slide.on{display:flex}
 
-  .kicker{font-size:calc(2.7*var(--u));color:var(--accent);font-weight:700;margin:0 0 calc(2*var(--u));letter-spacing:.02em}
-  h1{font-size:calc(9.5*var(--u));line-height:1.15;margin:0 0 calc(3*var(--u));letter-spacing:-.03em;word-break:keep-all}
-  h2{font-size:calc(6.6*var(--u));line-height:1.2;margin:0 0 calc(3.5*var(--u));letter-spacing:-.03em;word-break:keep-all}
+  /* 섹션 라벨 — 알약 태그 (토스 문법) */
+  .kicker{display:inline-block;align-self:flex-start;font-size:calc(2.5*var(--u));color:var(--accent-deep);font-weight:800;
+          margin:0 0 calc(2.6*var(--u));padding:calc(.9*var(--u)) calc(2.2*var(--u));
+          background:var(--accent-wash);border-radius:999px;letter-spacing:.01em}
+  h1{font-size:calc(10.5*var(--u));line-height:1.12;margin:0 0 calc(3*var(--u));letter-spacing:-.035em;word-break:keep-all;font-weight:800}
+  h2{font-size:calc(6.8*var(--u));line-height:1.18;margin:0 0 calc(3.5*var(--u));letter-spacing:-.03em;word-break:keep-all;font-weight:800}
   p{font-size:calc(3.7*var(--u));line-height:1.5;margin:0 0 calc(1.6*var(--u));word-break:keep-all}
   p.sub{color:var(--mute);font-size:calc(3.3*var(--u))}
   ul{margin:0 0 calc(2*var(--u));padding-left:calc(3.4*var(--u))}
   li{font-size:calc(3.9*var(--u));line-height:1.5;margin-bottom:calc(1.4*var(--u));word-break:keep-all}
   b{color:var(--accent)}
 
-  .eq{display:inline-block;font-size:calc(4.8*var(--u));font-weight:700;
-      padding:calc(2*var(--u)) calc(3.6*var(--u));background:var(--soft);
-      border-left:calc(.9*var(--u)) solid var(--accent);margin:calc(1*var(--u)) 0 calc(3.5*var(--u))}
+  .eq{display:inline-block;align-self:flex-start;font-size:calc(4.8*var(--u));font-weight:800;color:#fff;
+      padding:calc(2*var(--u)) calc(3.6*var(--u));background:var(--accent);
+      border-radius:999px;margin:calc(1*var(--u)) 0 calc(3.5*var(--u));letter-spacing:-.01em}
 
-  .cols{display:flex;gap:calc(2.5*var(--w));align-items:stretch;margin:calc(1*var(--u)) 0 calc(2*var(--u))}
+  .cols{display:flex;gap:calc(2*var(--w));align-items:stretch;margin:calc(1*var(--u)) 0 calc(2*var(--u))}
   .cols>div{flex:1;min-width:0}
-  .card{background:var(--soft);padding:calc(2.8*var(--u)) calc(3*var(--u));border-radius:calc(1.2*var(--u))}
-  .card h3{font-size:calc(2.9*var(--u));color:var(--mute);font-weight:400;margin:0 0 calc(1.2*var(--u))}
-  .card .v{font-size:calc(7.5*var(--u));font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  /* 흰 카드 — 바탕에서 그림자로 띄운다 */
+  .card{background:var(--card);padding:calc(3*var(--u)) calc(3.2*var(--u));border-radius:calc(2.4*var(--u));box-shadow:var(--shadow)}
+  .card h3{font-size:calc(2.8*var(--u));color:var(--mute);font-weight:600;margin:0 0 calc(1.4*var(--u))}
+  .card .v{font-size:calc(8.2*var(--u));font-weight:800;line-height:1.02;font-variant-numeric:tabular-nums;letter-spacing:-.035em}
   .card .v.good{color:var(--accent)}
   .card .v small{font-size:calc(3.4*var(--u));font-weight:400;color:var(--mute);letter-spacing:0}
   .card p{font-size:calc(3*var(--u));margin:calc(1*var(--u)) 0 0;line-height:1.45}
   .card ul{margin:0;padding-left:calc(3*var(--u))}
   .card li{font-size:calc(3.3*var(--u));margin-bottom:calc(.8*var(--u))}
 
-  table{border-collapse:collapse;width:100%;margin:calc(1*var(--u)) 0 calc(2.5*var(--u));font-size:calc(3.7*var(--u))}
-  th,td{padding:calc(1.6*var(--u)) calc(1.8*var(--u));border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
-  th{color:var(--mute);font-weight:400;font-size:calc(3*var(--u))}
+  /* 표 — 흰 카드 안에, 세로선 없이 */
+  table{border-collapse:separate;border-spacing:0;width:100%;margin:calc(1*var(--u)) 0 calc(2.5*var(--u));font-size:calc(3.7*var(--u));
+        background:var(--card);border-radius:calc(2*var(--u));box-shadow:var(--shadow);overflow:hidden}
+  th,td{padding:calc(1.8*var(--u)) calc(2.4*var(--u));border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  tr:last-child td{border-bottom:0}
+  th{color:var(--mute);font-weight:600;font-size:calc(2.9*var(--u));background:var(--soft)}
   td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   tr.hi td{font-weight:700;color:var(--accent)}
 
   .note{font-size:calc(2.9*var(--u));color:var(--mute);line-height:1.5;margin-top:calc(2*var(--u))}
-  .box{font-size:calc(3.6*var(--u));padding:calc(2.2*var(--u)) calc(3.2*var(--u));background:var(--soft);
-       border-left:calc(.9*var(--u)) solid var(--accent);line-height:1.5;margin-top:calc(2.5*var(--u));word-break:keep-all}
+  .box{font-size:calc(3.6*var(--u));padding:calc(2.4*var(--u)) calc(3.2*var(--u));background:var(--card);
+       border-left:calc(1*var(--u)) solid var(--accent);border-radius:calc(1.6*var(--u));box-shadow:var(--shadow);
+       line-height:1.5;margin-top:calc(2.5*var(--u));word-break:keep-all}
   .box.mute{border-left-color:var(--mute)}
 
-  .url{font-size:calc(6*var(--u));font-weight:700;color:var(--accent);word-break:break-all;margin:calc(1*var(--u)) 0 calc(.5*var(--u));letter-spacing:-.01em}
-  .steps{display:flex;gap:calc(2*var(--w));margin:calc(3*var(--u)) 0 calc(1*var(--u))}
-  .steps div{flex:1;background:var(--soft);padding:calc(2.6*var(--u)) calc(2*var(--u));border-radius:calc(1.2*var(--u));
-             font-size:calc(3.5*var(--u));line-height:1.4;text-align:center;word-break:keep-all}
-  .steps div b{display:block;font-size:calc(2.7*var(--u));color:var(--mute);margin-bottom:calc(1*var(--u));font-weight:400}
+  .url{font-size:calc(6.4*var(--u));font-weight:800;color:var(--accent);word-break:break-all;margin:calc(1*var(--u)) 0 calc(.5*var(--u));letter-spacing:-.02em}
+  .steps{display:flex;gap:calc(1.6*var(--w));margin:calc(3*var(--u)) 0 calc(1*var(--u))}
+  .steps div{flex:1;background:var(--card);padding:calc(2.8*var(--u)) calc(2*var(--u));border-radius:calc(2*var(--u));box-shadow:var(--shadow);
+             font-size:calc(3.5*var(--u));line-height:1.4;text-align:center;word-break:keep-all;font-weight:600}
+  .steps div b{display:grid;place-items:center;width:calc(4.2*var(--u));height:calc(4.2*var(--u));margin:0 auto calc(1.4*var(--u));
+               border-radius:50%;background:var(--accent);color:#fff;font-size:calc(2.4*var(--u));font-weight:800}
 
-  footer{position:fixed;bottom:calc(2.4*var(--u));left:0;right:0;display:flex;justify-content:space-between;
-         padding:0 calc(3*var(--w));font-size:calc(2.4*var(--u));color:var(--mute)}
-  .bar{position:fixed;top:0;left:0;height:calc(.6*var(--u));background:var(--accent);transition:width .15s}
+  /* 표지·마무리 — 틸 풀컬러로 리듬 */
+  .slide.cover{background:var(--accent);color:#fff;z-index:2}
+  .cover .kicker{background:rgba(255,255,255,.16);color:#fff}
+  .cover h1{color:#fff}
+  .cover p.sub,.cover .note{color:rgba(255,255,255,.82)}
+  .cover b{color:#fff}
+  .cover .url{color:#fff}
+
+  footer{position:fixed;bottom:calc(2.4*var(--u));left:0;right:0;display:flex;justify-content:space-between;align-items:center;
+         padding:0 calc(3*var(--w));font-size:calc(2.4*var(--u));color:var(--mute);z-index:3}
+  footer .pg{padding:calc(.6*var(--u)) calc(1.6*var(--u));background:var(--card);border-radius:999px;box-shadow:var(--shadow);font-weight:700;color:var(--ink)}
+  body.on-cover footer{color:rgba(255,255,255,.75)}   /* 틸 표지 위에서는 푸터 글자를 흰색으로 */
+  .bar{position:fixed;top:0;left:0;height:calc(.6*var(--u));background:var(--accent);transition:width .15s;z-index:3}
 
   /* 인쇄 = PDF 제출본. 슬라이드 1장 = 1280×720 한 페이지 */
   @page{size:1280px 720px;margin:0}
@@ -95,8 +116,9 @@
     html,body{overflow:visible;height:auto}
     .slide{display:flex !important;width:1280px;height:720px;page-break-after:always;break-after:page;overflow:hidden}
     .slide:last-child{page-break-after:auto;break-after:auto}
-    /* 제출용 PDF에서는 배경을 빼서 인쇄 품질과 가독성을 지킨다 */
+    /* 제출용 PDF에서는 배경 큐브를 빼서 가독성을 지킨다. 카드·표지 색은 그대로 인쇄 */
     footer,.bar,.bg{display:none}
+    body,.slide,.card,table,.box,.steps div,.kicker,.eq{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 </style>
 </head>
@@ -105,7 +127,7 @@
 <div class="bar" id="bar"></div>
 
 <!-- 1 표지 -->
-<section class="slide on">
+<section class="slide cover on">
   <p class="kicker">노인문제 해결을 위한 공공데이터 활용 서비스</p>
   <h1>주야간보호센터<br>돌봄 밀도 비교</h1>
   <p class="sub">요양보호사 한 명이 어르신 몇 분을 돌보는지로 비교합니다</p>
@@ -202,9 +224,18 @@
   <div class="box mute">화면에도 <b>"비교의 출발점"</b>이라고 적었습니다.<br>수십 곳을 <b>다섯 곳으로 줄여주는 것</b>, 거기까지가 이 서비스입니다.</div>
 </section>
 
+<!-- 9 마무리 (질문 시간에 띄워두는 장) -->
+<section class="slide cover">
+  <p class="kicker">감사합니다</p>
+  <h1>수십 곳을<br>다섯 곳으로</h1>
+  <p class="sub">요양보호사 한 명이 어르신 몇 분을 돌보는가 — 공공데이터 1종, 전국 5,346곳</p>
+  <div class="url">dolbomok.pages.dev</div>
+  <p class="note">휴대폰으로 바로 열립니다 · 소스 github.com/YA-TONGSIN/dolbom-density · 신운종</p>
+</section>
+
 <footer>
   <span>주야간보호센터 돌봄 밀도 비교</span>
-  <span><span id="cur">1</span> / <span id="tot">8</span> &nbsp;·&nbsp; ← → 로 이동</span>
+  <span class="pg"><span id="cur">1</span> / <span id="tot">9</span></span>
 </footer>
 
 <script>
@@ -229,6 +260,7 @@ document.getElementById('tot').textContent=S.length;
 function go(n){
   i=Math.max(0,Math.min(S.length-1,n));
   S.forEach((s,k)=>s.classList.toggle('on',k===i));
+  document.body.classList.toggle('on-cover', S[i].classList.contains('cover'));
   document.getElementById('cur').textContent=i+1;
   document.getElementById('bar').style.width=((i+1)/S.length*100)+'%';
 }
