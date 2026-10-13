@@ -88,7 +88,8 @@
   .slide.on .cols>div:nth-child(1),.slide.on .steps>div:nth-child(1){animation-delay:.30s}
   .slide.on .cols>div:nth-child(2),.slide.on .steps>div:nth-child(2){animation-delay:.38s}
   .slide.on .cols>div:nth-child(3),.slide.on .steps>div:nth-child(3){animation-delay:.46s}
-  .slide.on .steps>div:nth-child(4){animation-delay:.54s}
+  .slide.on .cols>div:nth-child(4),.slide.on .steps>div:nth-child(4){animation-delay:.54s}
+  .slide.on .steps>div:nth-child(5){animation-delay:.62s}
 
   /* 움직임에 민감한 사람에게는 전부 정지 */
   @media (prefers-reduced-motion:reduce){
@@ -247,9 +248,9 @@
     <div><b>②</b>시·군·구<br>선택</div>
     <div><b>③</b>적은 순 10곳<br>중간값 비교</div>
     <div><b>④</b>1위는 C등급<br>3위는 A등급</div>
-    <div><b>⑤</b>전화 아이콘<br>바로 걸기</div>
+    <div><b>⑤</b>필터 3개로<br>걸러보기</div>
   </div>
-  <p class="note">전국 5,346곳 · 238개 시군구 · 서버 없이 HTML 파일 하나</p>
+  <p class="note">3종 전부가 거르는 축 — A·B등급 · 요양보호사 3명 이상 · 전화번호 있는 곳 · 전국 5,346곳</p>
 </section>
 
 <!-- 6 검증에서 찾은 것 -->
@@ -273,6 +274,7 @@
     <div class="card"><h3>기관별 정원 · 인력 · 1인당</h3><div class="v good">0<small>건 불일치</small></div><p>5,346곳 전수</p></div>
     <div class="card"><h3>시·도 중간값</h3><div class="v good">0<small>건 불일치</small></div><p>17개 시·도</p></div>
     <div class="card"><h3>공단 평가등급 조인</h3><div class="v good">0<small>건 불일치</small></div><p>5,346곳 전수</p></div>
+    <div class="card"><h3>전화번호 ③</h3><div class="v good">0<small>건 없는 번호</small></div><p>5,270건 전수</p></div>
   </div>
   <div class="box mute">만든 코드를 재사용하지 않고 <b>원본 파일에서 따로 다시 계산</b>해 비교했습니다. 등급 대조에서 불일치 2건이 나왔는데 <b>같은 시설이 기관코드 2개로 등록</b>된 경우였고, 제품이 아니라 검증 코드를 고쳤습니다. 기록은 PLAN.md 6번.</div>
 </section>
