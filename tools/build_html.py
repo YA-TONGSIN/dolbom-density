@@ -486,7 +486,7 @@ function feeLine(){
 }
 
 /* 읍면동 목록 — 시·군·구를 고른 뒤에만 보인다. 좌표가 없어 거리는 못 재지만
-   같은 동 기관을 먼저 보여주는 "내 동네 먼저"는 데이터 1종 안에서 가능하다 */
+   같은 동 기관을 먼저 보여주는 "내 동네 먼저"는 주소 칸만으로 가능하다 */
 function fillDong(){
   const si=$sido.value, gg=$sgg.value;
   $dong.innerHTML='<option value="">선택 안 함</option>';
