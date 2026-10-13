@@ -196,7 +196,7 @@
   <p class="kicker">노인문제 해결을 위한 공공데이터 활용 서비스</p>
   <h1>주야간보호센터<br>돌봄 밀도 비교</h1>
   <p class="sub">요양보호사 한 명이 어르신 몇 분을 돌보는지로 비교합니다</p>
-  <p class="note">공공데이터 1종 · 전국 5,346곳 · 휴대폰으로 열리는 한 장짜리 웹페이지<br>신운종 · 2026-10-14</p>
+  <p class="note">공공데이터 2종 · 전국 5,346곳 · 휴대폰으로 열리는 한 장짜리 웹페이지<br>신운종 · 2026-10-14</p>
 </section>
 
 <!-- 2 문제 -->
@@ -213,7 +213,7 @@
 
 <!-- 3 지표 -->
 <section class="slide">
-  <p class="kicker">공공데이터 1종으로 만든 숫자 하나</p>
+  <p class="kicker">공공데이터 ①에서 만든 숫자 하나</p>
   <h2>요양보호사 1명이<br>어르신 몇 분을 돌보는가</h2>
   <div class="eq">정원 &divide; 요양보호사 수</div>
   <div class="cols">
@@ -226,16 +226,15 @@
 
 <!-- 4 차별점 -->
 <section class="slide">
-  <p class="kicker">공단 포털에 이미 있지 않나</p>
-  <h2>공단에 없는 축 하나만 더합니다</h2>
+  <p class="kicker">평가등급이면 충분하지 않나 — 데이터 ②를 겹쳐 봤습니다</p>
+  <h2>A등급 800곳 중 328곳은<br>인력이 중간값보다 부족합니다</h2>
   <div class="cols">
-    <div class="card"><h3>공단 「장기요양기관 찾기」에 있는 것</h3>
-      <ul><li>정원 구간 · 이용가능 여부</li><li>평가등급 · 거리순 정렬</li></ul></div>
-    <div class="card"><h3>없는 것</h3>
-      <ul><li><b>인력 규모로 줄 세우기</b></li><li>평가 없는 기관 40%도 비교</li></ul></div>
+    <div class="card"><h3>등급과 이 숫자의 상관</h3><div class="v">−0.18</div><p>거의 따로 움직인다</p></div>
+    <div class="card"><h3>A등급인데 중간값 초과</h3><div class="v">41<small>%</small></div><p>800곳 중 328곳</p></div>
+    <div class="card"><h3>평가 이력이 없는 기관</h3><div class="v">2,156<small>곳</small></div><p>등급만으로는 비교 불가</p></div>
   </div>
-  <div class="box">평가 결과 3,243곳 대조 — 상관계수 −0.18. <b>A등급의 44%는 인력이 평균 이하</b>입니다.</div>
-  <p class="note">평가 데이터는 비교에만 썼고 서비스에는 넣지 않았습니다. 대체가 아니라 보완.</p>
+  <div class="box"><b>같은 정보가 아니어서 둘을 나란히 놓았습니다.</b> 카드마다 공단 평가등급을 병기하고, 「A·B등급만」 필터도 넣었습니다.</div>
+  <p class="note">장기요양기관 평가 결과 · data.go.kr 15104801 · 기관코드 조인 3,190곳(59.7%) · 2023~2024년 평가</p>
 </section>
 
 <!-- 5 시연 -->
@@ -272,9 +271,9 @@
   <div class="cols">
     <div class="card"><h3>기관별 정원 · 인력 · 1인당</h3><div class="v good">0<small>건 불일치</small></div><p>5,346곳 전수</p></div>
     <div class="card"><h3>시·도 중간값</h3><div class="v good">0<small>건 불일치</small></div><p>17개 시·도</p></div>
-    <div class="card"><h3>시연 Top 3</h3><div class="v good">3<small>/ 3 일치</small></div><p>원본 행 직접 대조</p></div>
+    <div class="card"><h3>공단 평가등급 조인</h3><div class="v good">0<small>건 불일치</small></div><p>5,346곳 전수</p></div>
   </div>
-  <div class="box mute">만든 코드를 재사용하지 않고 <b>원본 파일에서 따로 다시 계산</b>해 비교했습니다. 기록은 PLAN.md 6번.</div>
+  <div class="box mute">만든 코드를 재사용하지 않고 <b>원본 파일에서 따로 다시 계산</b>해 비교했습니다. 등급 대조에서 불일치 2건이 나왔는데 <b>같은 시설이 기관코드 2개로 등록</b>된 경우였고, 제품이 아니라 검증 코드를 고쳤습니다. 기록은 PLAN.md 6번.</div>
 </section>
 
 <!-- 8 한계 -->
@@ -285,6 +284,7 @@
     <li>정원은 실제 이용 인원이 아니라 인가받은 최대 인원</li>
     <li>요양보호사 수는 기관이 신고한 값</li>
     <li>자료는 반기마다 갱신 (기준일 2026-06-10)</li>
+    <li>공단 평가등급은 2023~2024년 평가 — 그 뒤 변화는 반영되지 않음</li>
   </ul>
   <div class="box mute">화면에도 "비교의 출발점"이라고 적었습니다.<br><b>수십 곳을 다섯 곳으로 줄여주는 것</b>, 거기까지가 이 서비스입니다.</div>
 </section>
@@ -293,7 +293,7 @@
 <section class="slide cover">
   <p class="kicker">감사합니다</p>
   <h1>수십 곳을<br>다섯 곳으로</h1>
-  <p class="sub">요양보호사 한 명이 어르신 몇 분을 돌보는가 — 공공데이터 1종, 전국 5,346곳</p>
+  <p class="sub">요양보호사 한 명이 어르신 몇 분을 돌보는가 — 공공데이터 2종, 전국 5,346곳</p>
   <div class="url">dolbomok.pages.dev</div>
   <p class="note">휴대폰으로 바로 열립니다 · 소스 github.com/YA-TONGSIN/dolbom-density · 신운종</p>
 </section>

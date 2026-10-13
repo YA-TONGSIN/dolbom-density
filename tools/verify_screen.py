@@ -4,12 +4,13 @@
 원본 XLSX로부터 **독립적으로 다시 계산한 값**과 전수 비교한다.
 build_data.py 를 재사용하지 않는다 — 같은 코드로 확인하면 자기 자신을 확인하는 꼴이다.
 
-실행: python tools/verify_screen.py dist/돌봄밀도.html data/ltc_20260610.xlsx
+실행: python tools/verify_screen.py dist/돌봄밀도.html data/ltc_20260610.xlsx [data/eval_20260625.csv]
 """
 import sys, json, re, statistics as st
 import openpyxl
 
 html_path, xlsx_path = sys.argv[1], sys.argv[2]
+eval_path = sys.argv[3] if len(sys.argv) > 3 else "data/eval_20260625.csv"
 
 # ── 1. 배포본 HTML에서 실제 탑재된 데이터 추출 ────────────────────────────
 src = open(html_path, encoding="utf-8").read()
@@ -88,7 +89,7 @@ for (code, t), c in cap.items():
     ratio = round(cv / sv, 2)
     prev = recomputed.get(code)
     if prev is None or ratio < prev["ratio"]:
-        recomputed[code] = {"name": g["name"], "sido": g["sido"], "sgg": g["sgg"],
+        recomputed[code] = {"code": code, "name": g["name"], "sido": g["sido"], "sgg": g["sgg"],
                             "cap": int(cv), "care": int(sv), "ratio": ratio,
                             "desig": g["desig"]}
 
@@ -186,6 +187,72 @@ for i, x in enumerate(gw, 1):
               f"{'일치 ✔' if same else '### 불일치'}")
     else:
         print("       원본: 매칭 실패")
-print()
+
+# ── 6. 2종째(평가 결과) 조인 대조 ─────────────────────────────────────────
+# 평가 CSV를 pandas 없이 표준 csv 모듈로 다시 읽어 code→등급 표를 독립적으로 만든 뒤,
+# 화면에 박혀 있는 등급과 전수 비교한다. build_data.py 의 머지 결과를 믿지 않는다.
 print("=" * 72)
-print(f"판정: 값 불일치 {len(mismatch)}건 · 중앙값 불일치 {bad}건 · 매칭실패 {len(unmatched)}건")
+print("【조인 대조】 화면 평가등급 vs 평가 CSV 독립 재계산")
+import csv
+from datetime import datetime
+
+ev_latest = {}          # code -> (평가일자, 등급)
+with open(eval_path, encoding="cp949", newline="") as f:
+    for r in csv.DictReader(f):
+        if "주야간" not in str(r.get("급여종류") or ""):
+            continue
+        code = str(r.get("장기요양기관기호") or "").strip().strip("'").replace("-", "")
+        g = str(r.get("평가등급") or "").strip()
+        try:
+            dt = datetime.strptime(str(r.get("평가일자") or "").strip()[:10], "%Y-%m-%d")
+        except ValueError:
+            continue
+        if code and g and (code not in ev_latest or dt > ev_latest[code][0]):
+            ev_latest[code] = (dt, g)
+print(f"  평가 CSV 독립 재계산: 주야간보호 기관 {len(ev_latest):,}곳")
+
+g_mismatch, g_shown, g_blank, g_amb = [], 0, 0, 0
+for it in items:
+    k = (it[F["name"]], SIDO[it[F["sidoIx"]]], it[F["sigungu"]])
+    cands = by_name.get(k) or []
+    # 같은 이름·지역이 기관코드 2개로 중복 등록된 경우가 있다(재가복지시설 + 재가장기요양기관).
+    # 등급은 기관코드마다 따로 붙으므로, 정원·요양보호사 수로 어느 코드인지 먼저 좁힌다.
+    exact = [c for c in cands if c["cap"] == it[F["cap"]] and c["care"] == it[F["care"]]]
+    pick = exact if len(exact) == 1 else cands
+    if len(exact) != 1 and len(cands) > 1:
+        g_amb += 1
+    expect = {ev_latest[c["code"]][1] for c in pick if c["code"] in ev_latest}
+    got = it[F["grade"]]
+    if got:
+        g_shown += 1
+        if got not in expect:
+            g_mismatch.append((k, got, sorted(expect)))
+    else:
+        g_blank += 1
+        # 화면이 비어 있는데 해당 기관코드에 등급이 있으면 조인을 놓친 것이다
+        if expect:
+            g_mismatch.append((k, "(없음)", sorted(expect)))
+
+print(f"  화면에 등급이 붙은 곳  {g_shown:,} / {len(items):,} ({g_shown/len(items)*100:.1f}%)")
+print(f"  화면이 '평가 이력 없음' {g_blank:,}")
+print(f"  ★ 등급 불일치          {len(g_mismatch):,}")
+print(f"  (코드 특정 불가 {g_amb:,}건 — 같은 이름·지역·정원·인력이 중복 등록된 경우)")
+for x in g_mismatch[:5]:
+    print(f"      {x[0]}  화면 {x[1]}  CSV {x[2]}")
+
+# 메타에 적어 둔 결합 근거 수치가 실제 탑재 데이터와 맞는지
+nat = meta["nationalMedian"]
+a_rows = [x for x in items if x[F["grade"]] == "A"]
+gap_calc = [x for x in a_rows if x[F["ratio"]] > nat]
+print()
+print(f"  A등급 {len(a_rows):,}곳 · 전국 중간값({nat}) 초과 {len(gap_calc):,}곳 "
+      f"({len(gap_calc)/max(len(a_rows),1)*100:.1f}%)")
+print(f"  메타 표기        gapBase {meta['gapBase']:,} · gapCount {meta['gapCount']:,} · {meta['gapPct']}%")
+meta_ok = (len(a_rows) == meta["gapBase"] and len(gap_calc) == meta["gapCount"])
+print(f"  메타 ↔ 탑재데이터 {'일치 ✔' if meta_ok else '### 불일치'}")
+print(f"  화면 문구용 상관계수 {meta['corr']} · 조인율 {meta['evalRate']}% ({meta['evalMatched']:,}곳)")
+print()
+
+print("=" * 72)
+print(f"판정: 값 불일치 {len(mismatch)}건 · 중앙값 불일치 {bad}건 · 매칭실패 {len(unmatched)}건 · "
+      f"등급 불일치 {len(g_mismatch)}건 · 메타 {'OK' if meta_ok else '불일치'}")

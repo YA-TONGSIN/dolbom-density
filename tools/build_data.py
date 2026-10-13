@@ -3,6 +3,8 @@ import pandas as pd
 
 path = sys.argv[1]
 out = sys.argv[2] if len(sys.argv) > 2 else "data/day_care.json"
+# 2종째 — 공단 장기요양기관 평가 결과 (10-13 규칙 완화로 결합)
+eval_path = sys.argv[3] if len(sys.argv) > 3 else "data/eval_20260625.csv"
 
 KEY = "장기요양기관코드"
 TYPES = ["B03", "C03"]  # 재가노인복지시설 / 재가장기요양기관 주야간보호
@@ -44,6 +46,30 @@ print(f"  → 순위 산출 가능 {len(d):,}곳")
 d = d.sort_values("ratio").drop_duplicates(subset=[KEY], keep="first")
 print(f"  → 기관코드 중복 제거 후 {len(d):,}곳")
 
+# ── 2종째 데이터: 국민건강보험공단_장기요양기관 평가 결과 (15104801) ───────
+# 조인키는 기관코드 하나뿐이다. 두 파일의 표기가 달라 한쪽을 맞춘다.
+#   평가 CSV : '1-11560-00018'  (엑셀 텍스트 보호용 작은따옴표 + 하이픈)
+#   시설 XLSX: 11156000018      (하이픈 없는 11자리)
+# 이름·주소 유사도 매칭은 쓰지 않는다 — 틀린 등급을 붙이느니 "평가 이력 없음"이 낫다.
+ev = pd.read_csv(eval_path, encoding="cp949")
+ev_all = len(ev)
+ev = ev[ev["급여종류"].astype(str).str.contains("주야간", na=False)].copy()
+ev["code"] = (ev["장기요양기관기호"].astype(str)
+              .str.strip().str.strip("'").str.replace("-", "", regex=False))
+ev["평가일자"] = pd.to_datetime(ev["평가일자"].astype(str), errors="coerce")
+ev_from, ev_to = ev["평가일자"].min(), ev["평가일자"].max()
+# 한 기관이 여러 차례 평가받았다 — 가장 최근 평가만 쓴다
+ev = ev.sort_values("평가일자").drop_duplicates("code", keep="last")
+ev["gyear"] = ev["평가일자"].dt.year.astype("Int64").astype(str).replace("<NA>", "")
+print(f"평가 데이터 {ev_all:,}행 → 주야간보호 기관 단위 최신 평가 {len(ev):,}곳")
+
+d["code"] = d[KEY].astype(str).str.strip()
+d = d.merge(ev[["code", "평가등급", "평가총점", "gyear"]], on="code", how="left")
+d["grade"] = d["평가등급"].fillna("").astype(str).str.strip()
+d["gyear"] = d["gyear"].fillna("").astype(str)
+matched = int((d["grade"] != "").sum())
+print(f"  → 조인 성공 {matched:,}곳 ({matched/len(d)*100:.1f}%) · 나머지는 '평가 이력 없음'으로 표시")
+
 # 개원 경과개월. 신규 지정 기관은 정원(인가치)은 큰데 인력이 아직 미충원이라
 # 1인당 수치가 구조적으로 나쁘게 나온다. 숨기지 않고 '개원 초기'로 표시한다.
 BASE = pd.Timestamp("2026-06-10")
@@ -60,6 +86,27 @@ nat_med = float(mature["ratio"].median())
 sido_med = mature.groupby("시도")["ratio"].median().round(2).to_dict()
 for s in d["시도"].unique():            # 성숙 기관이 없는 시도 대비
     sido_med.setdefault(s, round(float(d[d["시도"] == s]["ratio"].median()), 2))
+
+# ── 두 데이터가 같은 말을 하는가 — 결합의 근거를 빌드 때마다 다시 계산한다 ──
+# 같은 정보라면 등급 하나로 충분하고, 2종 결합은 장식이 된다. 실제로 확인한다.
+ev_d = d[d["grade"] != ""].copy()
+score = pd.to_numeric(ev_d["평가총점"], errors="coerce")
+ok = ev_d["ratio"].notna() & score.notna()
+corr = float(ev_d.loc[ok, "ratio"].corr(score[ok]))
+grade_med = {g: round(float(ev_d[ev_d["grade"] == g]["ratio"].median()), 2)
+             for g in ["A", "B", "C", "D", "E"] if (ev_d["grade"] == g).any()}
+grade_n = {g: int((ev_d["grade"] == g).sum()) for g in grade_med}
+a_all = ev_d[ev_d["grade"] == "A"]
+gap = a_all[a_all["ratio"] > nat_med]          # A등급인데 돌봄 밀도는 전국 중간값보다 나쁜 곳
+de_all = ev_d[ev_d["grade"].isin(["D", "E"])]
+rev = de_all[de_all["ratio"] < nat_med]        # D·E등급인데 돌봄 밀도는 중간값보다 좋은 곳
+gap_pct = round(len(gap) / max(len(a_all), 1) * 100, 1)
+rev_pct = round(len(rev) / max(len(de_all), 1) * 100, 1)
+print()
+print(f"평가총점 ↔ 1인당 수치 상관계수 {corr:.3f}  (0에 가까울수록 서로 다른 정보)")
+print(f"  등급별 1인당 중앙값 {grade_med}")
+print(f"  A등급 {len(a_all):,}곳 중 전국 중간값보다 나쁜 곳 {len(gap):,}곳 ({gap_pct}%)")
+print(f"  D·E등급 {len(de_all):,}곳 중 전국 중간값보다 좋은 곳 {len(rev):,}곳 ({rev_pct}%)")
 
 # 용량 절감 ①: 시도 문자열을 인덱스로
 sido_list = sorted(d["시도"].unique())
@@ -81,7 +128,8 @@ def trim_addr(addr, sd, sg):
 
 # 용량 절감 ③: 객체 → 배열 (키 이름 반복 제거)
 FIELDS = ["name", "sidoIx", "sigungu", "addr", "cap", "care", "ratio",
-          "nurse", "rehab", "social", "since", "isNew", "dong"]
+          "nurse", "rehab", "social", "since", "isNew", "dong",
+          "grade", "gyear"]   # 2종째(평가 결과)에서 붙인 칸. 미평가는 빈 문자열
 records = []
 for _, r in d.iterrows():
     records.append([
@@ -98,6 +146,8 @@ for _, r in d.iterrows():
         str(r["ym"]),
         1 if r["is_new"] else 0,
         str(r["읍면동"]) if isinstance(r["읍면동"], str) else "",
+        str(r["grade"]),
+        str(r["gyear"]),
     ])
 
 sigungu_by_sido = {s: sorted(d[d["시도"] == s]["시군구"].unique()) for s in sido_list}
@@ -115,6 +165,23 @@ payload = {
         "nationalMedian": round(nat_med, 2),
         "sidoMedian": sido_med,
         "medianNote": f"중앙값은 개원 {NEW_MONTHS}개월 미만 기관을 제외하고 계산",
+        # ── 2종째: 평가 결과 ──────────────────────────────────────────
+        "source2": "공공데이터포털 국민건강보험공단_장기요양기관 평가 결과",
+        "dataId2": "15104801",
+        "joinKey": "장기요양기관코드 (평가 CSV의 장기요양기관기호에서 하이픈 제거)",
+        "evalRange": f"{ev_from:%Y-%m-%d} ~ {ev_to:%Y-%m-%d}",
+        "evalMatched": matched,
+        "evalRate": round(matched / len(d) * 100, 1),
+        "evalNote": "평가 이력이 없는 기관은 등급을 비워 둔다 (이름·주소 유사도 매칭 미사용)",
+        "corr": round(corr, 3),
+        "gradeMedian": grade_med,
+        "gradeCount": grade_n,
+        "gapCount": len(gap),
+        "gapPct": gap_pct,
+        "gapBase": len(a_all),
+        "revCount": len(rev),
+        "revPct": rev_pct,
+        "revBase": len(de_all),
     },
     "fields": FIELDS,
     "sido": sido_list,

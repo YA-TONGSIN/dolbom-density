@@ -44,9 +44,9 @@ TEMPLATE = r"""<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>주야간보호센터 돌봄 밀도 비교 — 요양보호사 1인당 어르신 수로 전국 비교</title>
-<meta name="description" content="부모님 동네 주야간보호센터를 요양보호사 1인당 어르신 수로 비교합니다. 공공데이터 1종(국민건강보험공단 장기요양기관 시설별 현황), 전국 5,346곳, 시·도 중간값과 나란히 표시.">
+<meta name="description" content="부모님 동네 주야간보호센터를 요양보호사 1인당 어르신 수로 비교합니다. 공공데이터 2종(국민건강보험공단 장기요양기관 시설별 현황 + 평가 결과), 전국 __COUNT__곳, 공단 평가등급과 나란히 표시.">
 <meta property="og:title" content="주야간보호센터 돌봄 밀도 비교">
-<meta property="og:description" content="요양보호사 한 명이 어르신 몇 분을 돌보는지로 전국 주야간보호센터를 비교합니다.">
+<meta property="og:description" content="공단 평가등급은 알려주지 않는 숫자 — 요양보호사 한 명이 어르신 몇 분을 돌보는지로 전국 주야간보호센터를 비교합니다.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#0a6b5c">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a6b5c'/%3E%3Ctext x='32' y='45' font-size='34' font-family='Malgun Gothic,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3E%EB%8F%8C%3C/text%3E%3C/svg%3E">
@@ -226,8 +226,22 @@ TEMPLATE = r"""<!DOCTYPE html>
   }
   .chip.good{background:var(--accent-wash);color:var(--accent-deep)}
   .chip.near{background:var(--ink);color:var(--card);margin-left:6px}   /* 내 동네 표식 — 검정 알약 */
+  /* 공단 평가등급 — 2종째 데이터. 우리 숫자(틸)와 섞이지 않게 테두리형 중립 배지로 둔다.
+     등급은 공단이 매긴 값이고 우리 지표가 아니다. 색으로 서열을 매기지 않는다. */
+  .chip.gr{background:transparent;border:1.5px solid var(--line);color:var(--mute);font-weight:700}
+  .chip.gr b{color:var(--ink);font-weight:800}
+  .chip.gr.none{border-style:dashed}
   .verdict{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
   @media (prefers-color-scheme:dark){ .chip.good{color:#5fd3b8} }  /* 어두운 바탕에서 배지 글자 대비 확보 */
+
+  /* 두 데이터를 겹쳐야만 나오는 한 문장 — 이 서비스가 존재하는 이유 */
+  .insight{
+    padding:var(--s3) 15px;border-radius:var(--r-sm);
+    background:var(--accent-wash);color:var(--ink);
+    font-size:var(--t-sm);line-height:1.6;border:1px solid var(--hair);
+  }
+  .insight b{font-weight:800;color:var(--accent-deep)}
+  @media (prefers-color-scheme:dark){ .insight b{color:#7fd9c6} }
 
   /* 넓은 화면 — 카드가 3열로 서므로 카드 안은 세로 쌓기 유지. 숫자만 조금 더 크게 */
   @media (min-width:900px){
@@ -257,9 +271,37 @@ TEMPLATE = r"""<!DOCTYPE html>
   .new p{padding:0 13px 12px 36px;color:var(--mute);line-height:1.65}
   .new b{font-weight:700;color:var(--ink)}
 
-  /* 행동 — 주 버튼은 크고 둥글게 (높이 52), 보조는 글자 링크 */
+  /* 행동 — 전화 안내 아이콘 · 검색하기 · 주소 복사 한 줄, 그 아래 공단 링크 */
   .act{display:grid;row-gap:var(--s2);justify-items:stretch;padding-top:var(--s1)}
+  .btns{display:grid;grid-template-columns:auto 1fr auto;gap:var(--s2);align-items:stretch}
   .act a.go{text-align:center}
+
+  /* 전화 아이콘 — 번호를 띄우는 게 아니라 "왜 번호가 없는지"를 알려준다 */
+  .tel{position:relative;display:grid;place-items:center;width:52px;border-radius:var(--r-sm);
+       background:var(--soft);color:var(--mute);cursor:help;transition:background var(--t-fast),color var(--t-fast)}
+  .tel:hover,.tel:focus-visible{background:var(--accent-wash);color:var(--accent-deep);outline:none}
+  /* 말풍선은 아이콘 왼쪽 끝에 맞춰 오른쪽으로 편다.
+     가운데 정렬하면 첫 열 카드에서 화면 밖으로 잘린다. */
+  .tel .tip{
+    position:absolute;bottom:calc(100% + 9px);left:0;transform:translateY(4px);
+    width:max-content;max-width:230px;padding:10px 13px;border-radius:var(--r-sm);
+    background:var(--ink);color:var(--card);font-size:var(--t-xs);font-weight:500;line-height:1.5;
+    text-align:left;opacity:0;visibility:hidden;pointer-events:none;z-index:20;
+    transition:opacity var(--t-fast),transform var(--t-fast),visibility var(--t-fast);
+  }
+  .tel .tip::after{content:"";position:absolute;top:100%;left:20px;
+                   border:6px solid transparent;border-top-color:var(--ink)}
+  .tel .tip b{color:var(--card)}
+  .tel:hover .tip,.tel:focus-visible .tip{opacity:1;visibility:visible;transform:translateY(0)}
+
+  button.copy{
+    padding:0 var(--s4);font-size:var(--t-sm);font-family:inherit;font-weight:700;white-space:nowrap;
+    color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:var(--r-sm);
+    cursor:pointer;transition:background var(--t-fast),color var(--t-fast);
+  }
+  button.copy:hover{background:var(--line)}
+  button.copy.done{background:var(--accent-wash);color:var(--accent-deep);border-color:#cfe3dd}
+
   a.go{
     display:inline-block;padding:15px 24px;font-size:var(--t-base);font-weight:700;
     color:var(--on-accent);background:var(--accent);border-radius:var(--r-sm);text-decoration:none;
@@ -297,6 +339,8 @@ TEMPLATE = r"""<!DOCTYPE html>
     a.go,button.share{width:100%;text-align:center}
     .act{justify-items:stretch}
     a.portal{text-align:center}
+    .tel{width:48px}
+    button.copy{padding:0 var(--s3)}
   }
 </style>
 </head>
@@ -304,9 +348,12 @@ TEMPLATE = r"""<!DOCTYPE html>
 <div class="wrap">
 
   <header class="head">
-    <p class="eyebrow">공공데이터 1종 · 전국 __COUNT__곳</p>
+    <p class="eyebrow">공공데이터 2종 · 전국 __COUNT__곳</p>
     <h1>주야간보호센터 돌봄 밀도 비교</h1>
     <p class="lede">요양보호사 한 명이 어르신 몇 분을 돌보는지로 비교합니다. 숫자가 적을수록 한 분께 더 많은 손길이 갑니다.</p>
+    <p class="insight">공단 평가 <b>A등급</b>을 받은 __GAPBASE__곳 가운데 <b>__GAPCOUNT__곳(__GAPPCT__%)</b>은
+      요양보호사 1인당 어르신 수가 전국 중간값보다 많습니다. 등급과 이 숫자는 거의 따로 움직입니다
+      (평가총점과의 상관계수 __CORR__). <b>등급만 보고 고르면 놓치는 숫자</b>라서, 두 가지를 나란히 놓았습니다.</p>
   </header>
 
   <div class="panel">
@@ -330,6 +377,10 @@ TEMPLATE = r"""<!DOCTYPE html>
     <button id="share" class="share" type="button" hidden>이 결과 링크 복사</button>
   </div>
 
+  <div class="opts">
+    <label><input id="onlyab" type="checkbox"> 공단 평가 A·B등급만</label>
+  </div>
+
   <div class="opts" id="feeopts" hidden>
     <label><input id="feeon" type="checkbox"> 비용 함께 보기</label>
   </div>
@@ -344,8 +395,10 @@ TEMPLATE = r"""<!DOCTYPE html>
   <button id="more" class="more" hidden>나머지 전부 보기</button>
 
   <footer>
-    <div><b>출처</b> 공공데이터포털 · 국민건강보험공단_장기요양기관 시설별 현황 (데이터 __DATAID__)</div>
+    <div><b>출처 ①</b> 공공데이터포털 · 국민건강보험공단_장기요양기관 시설별 현황 (데이터 __DATAID__)</div>
     <div><b>자료 기준일</b> __BASEDATE__ · <b>갱신 주기</b> __CYCLE__</div>
+    <div><b>출처 ②</b> 공공데이터포털 · __SOURCE2__ (데이터 __DATAID2__) · 평가일자 __EVALRANGE__</div>
+    <div><b>두 자료 연결</b> __JOINKEY__ · 등급이 붙은 곳 <b>__EVALMATCHED__곳(__EVALRATE__%)</b>, 나머지는 「평가 이력 없음」</div>
     <div><b>대상</b> __TYPES__ · 전국 <b>__COUNT__곳</b></div>
     <div><b>계산식</b> 요양보호사 1인당 어르신 수 = 정원 &divide; 요양보호사 수 (적을수록 앞)</div>
     <div><b>중간값 기준</b> __MEDIANNOTE__ (개원 __NEWCOUNT__곳 제외)</div>
@@ -357,6 +410,11 @@ TEMPLATE = r"""<!DOCTYPE html>
       <b>개원 1년 미만 기관은 따로 표시했습니다.</b> 전국 자료로 확인해 보면 개원 2개월 미만 기관의
       1인당 어르신 수 중간값은 11.0명, 10년 이상 된 기관은 6.2명입니다.
       갓 문을 연 곳이 불리하게 보이는 것은 운영이 자리 잡는 중이기 때문이지 돌봄이 나쁘다는 뜻이 아닙니다.
+      <br><br>
+      <b>공단 평가등급은 __EVALRANGE__에 이뤄진 평가입니다.</b> 그 뒤에 바뀐 사정은 반영되어 있지 않고,
+      아직 평가를 받지 않은 기관도 많아 __COUNT__곳 중 __EVALMATCHED__곳에만 등급이 있습니다.
+      등급이 없는 것은 <b>나쁘다는 뜻이 아니라 자료가 없다는 뜻</b>입니다.
+      두 자료는 기관코드로만 연결했고, 이름이나 주소가 비슷하다는 이유로 붙이지 않았습니다.
     </div>
   </footer>
 
@@ -380,6 +438,7 @@ const FEE = DATA.fee || null;
 const $feeopts=document.getElementById('feeopts'), $feeon=document.getElementById('feeon');
 const $feepick=document.getElementById('feepick'), $grade=document.getElementById('grade');
 const $only = document.getElementById('only');
+const $onlyab = document.getElementById('onlyab');
 const $share= document.getElementById('share');
 const SAVE  = 'dolbom.pick';   // 마지막 선택 지역 (브라우저에만 저장)
 
@@ -465,31 +524,48 @@ function render(){
   const q=$q.value.trim().toLowerCase();
   current = q? region.filter(r=> r[F.name].toLowerCase().includes(q)) : region;
   if($only.checked) current = current.filter(r=> r[F.ratio] < med);
+  // 공단 평가등급 필터. 평가 이력이 없는 기관은 여기서 전부 빠지므로 아래에서 몇 곳이 빠졌는지 밝힌다
+  const noEval = region.filter(r=> !r[F.grade]).length;
+  if($onlyab.checked) current = current.filter(r=> r[F.grade]==='A' || r[F.grade]==='B');
 
   // "내 동네 먼저" — 같은 읍면동을 위로, 그 안에서는 1인당 적은 순. 순위 번호(r.rank)는 지역 순위 그대로
   const dg=$dong.value;
   if(dg) current = current.slice().sort((a,b)=>
       ((a[F.dong]===dg)?0:1)-((b[F.dong]===dg)?0:1) || a[F.ratio]-b[F.ratio] || b[F.cap]-a[F.cap]);
 
+  const cond=[];
+  if(q) cond.push('\''+esc($q.value.trim())+'\'');
+  if($only.checked) cond.push('중간값보다 적은 곳');
+  if($onlyab.checked) cond.push('평가 A·B등급');
+
   if(current.length===0){
-    $bar.innerHTML = where+' 주야간보호센터 '+region.length+'곳 중 '
-      + (q? '<b>\''+esc($q.value.trim())+'\'</b>이 들어간 이름' : '')
-      + (q&&$only.checked? '이면서 ' : '')
-      + ($only.checked? '중간값보다 적은 곳' : '')
-      + '이 없습니다.';
-    $list.innerHTML='<li class="empty">'+($only.checked? '체크를 풀거나 ' : '')+(q? '검색어를 지우거나 ' : '')+'다른 지역을 골라 보세요.</li>';
+    $bar.innerHTML = where+' 주야간보호센터 '+region.length+'곳 중 <b>'+cond.join(' · ')+'</b>에 해당하는 곳이 없습니다.'
+      + ($onlyab.checked && noEval? '<small class="hint">이 지역 '+noEval+'곳은 공단 평가 이력이 없어 등급 조건에서 빠집니다.</small>' : '');
+    $list.innerHTML='<li class="empty">'+(($only.checked||$onlyab.checked)? '체크를 풀거나 ' : '')+(q? '검색어를 지우거나 ' : '')+'다른 지역을 골라 보세요.</li>';
     return;
   }
-  const cond=[]; if(q) cond.push('\''+esc($q.value.trim())+'\''); if($only.checked) cond.push('중간값보다 적은 곳');
   $bar.innerHTML = where+' 주야간보호센터 <b>'+region.length+'곳</b>'
     + (cond.length? ' 중 <b>'+cond.join(' · ')+' '+current.length+'곳</b>' : '')
     + ' · '+sidoName+' 중간값 <b>'+fmt(med)+'명</b>'
     + (dg? ' · <b>'+esc(dg)+'</b> '+current.filter(r=>r[F.dong]===dg).length+'곳 먼저' : '')
-    + '<small class="hint">중간값 = 이 지역 기관을 줄 세웠을 때 한가운데 값 (개원 1년 미만 제외)</small>'
+    + '<small class="hint">중간값 = 이 지역 기관을 줄 세웠을 때 한가운데 값 (개원 1년 미만 제외)'
+    + ($onlyab.checked && noEval? '<br>이 지역 '+noEval+'곳은 공단 평가 이력이 없어 이 조건에서 빠져 있습니다.' : '')
+    + '</small>'
     + feeLine();
 
   expanded=false;
   draw();
+}
+
+/* 공단 평가등급 배지 — 2종째 데이터에서 온 값.
+   우리가 매긴 등급이 아니라는 걸 분명히 하려고 "공단 평가"를 앞에 적고,
+   평가 연도까지 붙인다 (2023~2024년 평가라 최근 변화는 반영되지 않는다).
+   이력이 없으면 숨기지 않고 "평가 이력 없음"으로 적는다 — 빈칸은 오해를 만든다. */
+function gradeChip(r){
+  const g=r[F.grade];
+  if(!g) return '<span class="chip gr none" title="공단 평가를 아직 받지 않았거나 공개 자료에 없습니다">공단 평가 이력 없음</span>';
+  const y=r[F.gyear];
+  return '<span class="chip gr">공단 평가 <b>'+esc(g)+'등급</b>'+(y? ' <span>('+esc(y)+')</span>' : '')+'</span>';
 }
 
 function meter(ratio, med, good){
@@ -566,6 +642,10 @@ function draw(){
       : '';
 
     const q=encodeURIComponent(r[F.name]+' '+r[F.sigungu]);
+    // 지도 앱에 그대로 붙여넣도록 시·도까지 붙인 전체 주소.
+    // 원본 주소에 공백이 겹친 행이 있어 한 칸으로 줄인다 — 화면은 HTML이 알아서 접지만
+    // 클립보드로는 그대로 나간다.
+    const fullAddr = (DATA.sido[r[F.sidoIx]]+' '+r[F.sigungu]+' '+r[F.addr]).replace(/\s+/g,' ').trim();
     // 카드 안을 평평한 10행으로 둔다 — 서브그리드로 같은 줄 카드의 행 높이를 맞추기 위해
     return '<li>'
       + '<p class="name"><span class="rank">'+r.rank+'위</span>'+esc(r[F.name])+'</p>'
@@ -576,12 +656,22 @@ function draw(){
       +   '<p class="calc">정원 '+r[F.cap]+'명 &divide; 요양보호사 '+r[F.care]+'명</p>'
       +   meter(ratio, med, good)
       +   '<p class="verdict"><span class="chip'+(good?' good':'')+'">'+cmp+'</span>'
+      +     gradeChip(r)
       +     (($dong.value && r[F.dong]===$dong.value)? '<span class="chip near">내 동네</span>' : '')+'</p>'
       +   '<p class="tags"><b>인력</b> <i>'+tags.join(' · ')+'</i></p>'
       +   '<div class="noteslot">'+note+'</div>'
       +   '<div class="act">'
-      +   '<a class="go" target="_blank" rel="noopener noreferrer" '
-      +     'href="https://search.naver.com/search.naver?query='+q+'">전화번호 찾아보기</a>'
+      +   '<div class="btns">'
+      +     '<span class="tel" tabindex="0" role="note" aria-label="전화번호 안내">'
+      +       '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">'
+      +         '<path fill="currentColor" d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.2.4 2.4.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1l-2.3 2.2z"/>'
+      +       '</svg>'
+      +       '<span class="tip">이 공공데이터에는 <b>전화번호 칸이 없습니다.</b><br>「검색하기」로 확인하세요.</span>'
+      +     '</span>'
+      +     '<a class="go" target="_blank" rel="noopener noreferrer" '
+      +       'href="https://search.naver.com/search.naver?query='+q+'">검색하기</a>'
+      +     '<button class="copy" type="button" data-addr="'+esc(fullAddr)+'">주소 복사</button>'
+      +   '</div>'
       +   '<a class="portal" target="_blank" rel="noopener noreferrer" '
       +     'href="https://www.longtermcare.or.kr/npbs/r/a/201/selectLtcoSrch.web">공단 포털에서 이용가능·평가등급 확인</a>'
       +   '</div>'
@@ -596,11 +686,28 @@ function draw(){
 
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+/* 주소 복사 — 카드가 매번 다시 그려지므로 목록에 위임해서 한 번만 연결한다 */
+$list.addEventListener('click', e=>{
+  const btn = e.target.closest('button.copy'); if(!btn) return;
+  const addr = btn.getAttribute('data-addr') || '';
+  const done = ()=>{
+    const old = btn.textContent;
+    btn.textContent='복사됨'; btn.classList.add('done');
+    setTimeout(()=>{ btn.textContent=old; btn.classList.remove('done'); }, 1800);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(addr).then(done).catch(()=>prompt('주소를 복사하세요', addr));
+  } else {
+    prompt('주소를 복사하세요', addr);
+  }
+});
+
 $sido.addEventListener('change',()=>{ fillSgg(); fillDong(); render(); savePick(); setHash(); });
 $sgg .addEventListener('change', ()=>{ fillDong(); render(); savePick(); setHash(); });
 $dong.addEventListener('change', ()=>{ render(); savePick(); setHash(); });
 $q   .addEventListener('input', render);
 $only.addEventListener('change', render);
+$onlyab.addEventListener('change', render);
 if(FEE){
   $feeon.addEventListener('change', ()=>{ $feepick.hidden=!$feeon.checked; render(); });
   $grade.addEventListener('change', render);
@@ -623,9 +730,22 @@ html = (TEMPLATE
         .replace("__TYPES__", m["types"])
         .replace("__COUNT__", f"{m['count']:,}")
         .replace("__MEDIANNOTE__", m["medianNote"].replace("중앙값", "중간값"))   # 화면 용어는 "중간값"
-        .replace("__NEWCOUNT__", f"{m['newCount']:,}"))
+        .replace("__NEWCOUNT__", f"{m['newCount']:,}")
+        # ── 2종째(평가 결과) 관련 ───────────────────────────────────────
+        .replace("__SOURCE2__", m["source2"].replace("공공데이터포털 ", ""))
+        .replace("__DATAID2__", m["dataId2"])
+        .replace("__JOINKEY__", m["joinKey"])
+        .replace("__EVALRANGE__", m["evalRange"])
+        .replace("__EVALMATCHED__", f"{m['evalMatched']:,}")
+        .replace("__EVALRATE__", f"{m['evalRate']}")
+        .replace("__GAPCOUNT__", f"{m['gapCount']:,}")
+        .replace("__GAPBASE__", f"{m['gapBase']:,}")
+        .replace("__GAPPCT__", f"{m['gapPct']}")
+        .replace("__CORR__", f"{m['corr']}"))
 
-os.makedirs(os.path.dirname(out), exist_ok=True)
+outdir = os.path.dirname(out)
+if outdir:                      # 현재 폴더에 바로 쓰는 경우 dirname이 빈 문자열이다
+    os.makedirs(outdir, exist_ok=True)
 with open(out, "w", encoding="utf-8") as f:
     f.write(html)
 

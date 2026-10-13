@@ -23,7 +23,7 @@ Pick a province → district. Centers appear sorted by **care-worker-to-senior r
 
 - **5,346 rows cross-checked** against the source XLSX with an independent recomputation (different library, not the build code): 0 mismatches
 - Found and fixed a join bug (home-care staff leaking into day-care counts), and a metric flaw (brand-new centers ranking worst) — both documented with evidence
-- Compared against official inspection grades (3,243 centers): correlation −0.18 → the ratio is **independent information**, not a proxy
+- Joined with official inspection grades (3,190 centers, 59.7%): correlation −0.18 → the ratio is **independent information**, not a proxy. 328 of 800 A-grade centers (41%) fall below the national median on staffing, so both are shown side by side; the grade join is itself cross-checked row by row (0 mismatches)
 
 ## Stack
 
