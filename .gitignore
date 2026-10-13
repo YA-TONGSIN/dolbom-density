@@ -11,3 +11,6 @@ Thumbs.db
 # API 인증키 — 절대 커밋하지 않는다 (build/ 에도 들어가지 않음)
 _apikey.txt
 data/_apikey.txt
+apikey.txt
+*apikey*.txt
+*.key

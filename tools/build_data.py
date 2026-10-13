@@ -89,6 +89,22 @@ d["gyear"] = d["gyear"].fillna("").astype(str)
 matched = int((d["grade"] != "").sum())
 print(f"  → 조인 성공 {matched:,}곳 ({matched/len(d)*100:.1f}%) · 나머지는 '평가 이력 없음'으로 표시")
 
+# ── 3종째 데이터: 장기요양기관 상세조회 API (15058856) — 전화번호 ──────────
+# 전화번호는 ①에도 ②에도 없다(①4개 시트·②20개 컬럼 직접 확인). 이 API에만 있다.
+# tools/fetch_tel.py 가 미리 받아 둔 결과를 읽기만 한다 — 빌드할 때 API를 때리지 않는다.
+# 못 받은 기관은 빈칸으로 둔다. 번호를 지어내지 않는다.
+TEL_PATH = "data/tel.json"
+tel_map = {}
+if os.path.exists(TEL_PATH):
+    with open(TEL_PATH, encoding="utf-8") as f:
+        tel_map = json.load(f)
+    print(f"전화번호 {len(tel_map):,}건 읽음 ({TEL_PATH})")
+else:
+    print(f"※ {TEL_PATH} 없음 — 전화번호 칸을 비운 채로 빌드한다")
+d["tel"] = d["code"].map(lambda c: tel_map.get(str(c), ""))
+tel_n = int((d["tel"] != "").sum())
+print(f"  → 전화번호 있는 곳 {tel_n:,}곳 ({tel_n/len(d)*100:.1f}%)")
+
 # 개원 경과개월. 신규 지정 기관은 정원(인가치)은 큰데 인력이 아직 미충원이라
 # 1인당 수치가 구조적으로 나쁘게 나온다. 숨기지 않고 '개원 초기'로 표시한다.
 BASE = pd.Timestamp("2026-06-10")
@@ -148,7 +164,8 @@ def trim_addr(addr, sd, sg):
 # 용량 절감 ③: 객체 → 배열 (키 이름 반복 제거)
 FIELDS = ["name", "sidoIx", "sigungu", "addr", "cap", "care", "ratio",
           "nurse", "rehab", "social", "since", "isNew", "dong",
-          "grade", "gyear"]   # 2종째(평가 결과)에서 붙인 칸. 미평가는 빈 문자열
+          "grade", "gyear",   # 2종째(평가 결과)에서 붙인 칸. 미평가는 빈 문자열
+          "tel"]              # 3종째(상세조회 API)에서 붙인 칸. 못 받으면 빈 문자열
 records = []
 for _, r in d.iterrows():
     records.append([
@@ -167,6 +184,7 @@ for _, r in d.iterrows():
         str(r["읍면동"]) if isinstance(r["읍면동"], str) else "",
         str(r["grade"]),
         str(r["gyear"]),
+        str(r["tel"]),
     ])
 
 sigungu_by_sido = {s: sorted(d[d["시도"] == s]["시군구"].unique()) for s in sido_list}

@@ -228,6 +228,9 @@ TEMPLATE = r"""<!DOCTYPE html>
   .name{font-size:var(--t-md);font-weight:700;word-break:keep-all;line-height:1.3;align-self:start}
   /* 빈 슬롯도 숨기지 않는다 — 숨기면 그 카드만 행이 하나 줄어 버튼이 다시 어긋난다 */
   .where{font-size:var(--t-sm);color:var(--mute);word-break:keep-all;line-height:1.5}
+  /* 주소 줄 끝에 전화번호. 새 행을 만들지 않는다 — 카드가 서브그리드 10행으로 묶여 있어
+     행을 늘리면 3열에서 카드끼리 높이가 어긋난다. */
+  .where .telno{color:var(--ink);font-weight:700;white-space:nowrap}
   .cap{font-size:var(--t-sm);color:var(--mute);margin-top:4px}
 
   .big{display:flex;align-items:baseline;gap:6px}
@@ -301,6 +304,10 @@ TEMPLATE = r"""<!DOCTYPE html>
   .tel{position:relative;display:grid;place-items:center;width:52px;border-radius:var(--r-sm);
        background:var(--soft);color:var(--mute);cursor:help;transition:background var(--t-fast),color var(--t-fast)}
   .tel:hover,.tel:focus-visible{background:var(--accent-wash);color:var(--accent-deep);outline:none}
+  /* 번호를 받은 기관은 아이콘이 실제 통화 링크가 된다(휴대폰에서 탭하면 바로 발신).
+     틸을 쓰는 건 '좋음'이 아니라 '행동'이라는 뜻 — 검색하기 버튼과 같은 규칙이다. */
+  a.tel{text-decoration:none;cursor:pointer;background:var(--accent-wash);color:var(--accent-deep)}
+  a.tel:hover,a.tel:focus-visible{background:var(--accent);color:var(--on-accent)}
   /* 말풍선은 아이콘 왼쪽 끝에 맞춰 오른쪽으로 편다.
      가운데 정렬하면 첫 열 카드에서 화면 밖으로 잘린다. */
   .tel .tip{
@@ -596,6 +603,25 @@ function gradeChip(r){
   return '<span class="chip gr">공단 평가 <b>'+esc(g)+'등급</b>'+(y? ' <span>('+esc(y)+')</span>' : '')+'</span>';
 }
 
+/* 전화 슬롯. 번호를 받은 기관은 실제 통화 링크, 못 받은 기관은 종전처럼 안내 말풍선.
+   번호가 없는 이유가 바뀌었다 — 예전엔 "데이터에 칸이 없음"이었지만 지금은
+   "이 기관만 공개돼 있지 않음"이다. 문구도 사실에 맞게 바꾼다. */
+const PHONE_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">'
+  + '<path fill="currentColor" d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.2.4 2.4.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1l-2.3 2.2z"/></svg>';
+
+function telSlot(r){
+  const t = r[F.tel];
+  if(t){
+    return '<a class="tel" href="tel:'+esc(t.replace(/-/g,''))+'" '
+      + 'aria-label="'+esc(r[F.name])+' 전화 걸기 '+esc(t)+'" title="'+esc(t)+'">'
+      + PHONE_SVG + '</a>';
+  }
+  return '<span class="tel" tabindex="0" role="note" aria-label="전화번호 안내">'
+    + PHONE_SVG
+    + '<span class="tip">이 기관은 <b>전화번호가 공개되어 있지 않습니다.</b><br>「검색하기」로 확인하세요.</span>'
+    + '</span>';
+}
+
 function meter(ratio, med, good){
   // 가운데(50%)가 중간값. 중간값의 2배를 끝으로 잡아 채움 길이를 정한다.
   // 수치 라벨은 달지 않는다 — 값은 큰 숫자에, 중간값은 상단 기준선에 이미 있다.
@@ -693,7 +719,8 @@ function draw(){
     // 카드 안을 평평한 10행으로 둔다 — 서브그리드로 같은 줄 카드의 행 높이를 맞추기 위해
     return '<li>'
       + '<p class="name"><span class="rank'+(r.rank<=3?' top':'')+'">'+r.rank+'위</span>'+esc(r[F.name])+'</p>'
-      +   '<p class="where">'+esc(r[F.sigungu]+' '+r[F.addr])+'</p>'
+      +   '<p class="where">'+esc(r[F.sigungu]+' '+r[F.addr])
+      +     (r[F.tel]? ' · <span class="telno">'+esc(r[F.tel])+'</span>' : '')+'</p>'
       +   '<p class="cap">요양보호사 1명이 돌보는 어르신</p>'
       +   '<div class="big"><span class="num'+(good?' good':'')+'">'+fmt(ratio)+'</span>'
       +     '<span class="unit">명</span></div>'
@@ -706,12 +733,7 @@ function draw(){
       +   '<div class="noteslot">'+note+'</div>'
       +   '<div class="act">'
       +   '<div class="btns">'
-      +     '<span class="tel" tabindex="0" role="note" aria-label="전화번호 안내">'
-      +       '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">'
-      +         '<path fill="currentColor" d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.2.4 2.4.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1l-2.3 2.2z"/>'
-      +       '</svg>'
-      +       '<span class="tip">이 공공데이터에는 <b>전화번호 칸이 없습니다.</b><br>「검색하기」로 확인하세요.</span>'
-      +     '</span>'
+      +     telSlot(r)
       +     '<a class="go" target="_blank" rel="noopener noreferrer" '
       +       'href="https://search.naver.com/search.naver?query='+q+'">검색하기</a>'
       +     '<button class="copy" type="button" data-addr="'+esc(fullAddr)+'">주소 복사</button>'
