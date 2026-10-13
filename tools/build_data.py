@@ -14,12 +14,14 @@ stf = pd.read_excel(xl, "인력현황")
 
 gen["시도"] = gen["시도 시군구 법정동명"].astype(str).str.split().str[0]
 gen["시군구"] = gen["시도 시군구 법정동명"].astype(str).str.split().str[1]
+# 읍면동 — "내 동네 먼저" 정렬용. 같은 데이터셋 안의 칸이라 규칙 ①(데이터 1종) 안에서 가능 (98.4% 채워져 있음)
+gen["읍면동"] = gen["시도 시군구 법정동명"].astype(str).str.split().str[2].fillna("")
 
 day = cap[cap["기관유형코드"].isin(TYPES)][[KEY, "기관유형코드", "정원"]]
 stf_cols = [KEY, "기관유형코드", "요양보호사", "간호사", "간호조무사",
             "사회복지사", "물리치료사", "작업치료사"]
 
-df = (day.merge(gen[[KEY, "장기요양기관이름", "시도", "시군구", "기관별 상세주소", "지정일자"]].drop_duplicates(KEY), on=KEY)
+df = (day.merge(gen[[KEY, "장기요양기관이름", "시도", "시군구", "읍면동", "기관별 상세주소", "지정일자"]].drop_duplicates(KEY), on=KEY)
          .merge(stf[stf_cols].drop_duplicates([KEY, "기관유형코드"]), on=[KEY, "기관유형코드"], how="left"))
 
 print(f"주야간보호 전국 원시 {len(df):,}곳")
@@ -79,7 +81,7 @@ def trim_addr(addr, sd, sg):
 
 # 용량 절감 ③: 객체 → 배열 (키 이름 반복 제거)
 FIELDS = ["name", "sidoIx", "sigungu", "addr", "cap", "care", "ratio",
-          "nurse", "rehab", "social", "since", "isNew"]
+          "nurse", "rehab", "social", "since", "isNew", "dong"]
 records = []
 for _, r in d.iterrows():
     records.append([
@@ -95,6 +97,7 @@ for _, r in d.iterrows():
         int(r["사회복지사"] or 0),
         str(r["ym"]),
         1 if r["is_new"] else 0,
+        str(r["읍면동"]) if isinstance(r["읍면동"], str) else "",
     ])
 
 sigungu_by_sido = {s: sorted(d[d["시도"] == s]["시군구"].unique()) for s in sido_list}

@@ -188,6 +188,8 @@ TEMPLATE = r"""<!DOCTYPE html>
     background:var(--field);color:var(--ink);
   }
   .chip.good{background:var(--accent-wash);color:var(--accent-deep)}
+  .chip.near{background:var(--ink);color:var(--card);margin-left:6px}   /* 내 동네 표식 — 검정 알약 */
+  .verdict{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
   @media (prefers-color-scheme:dark){ .chip.good{color:#5fd3b8} }  /* 어두운 바탕에서 배지 글자 대비 확보 */
 
   /* 넓은 화면 — 카드가 3열로 서므로 카드 안은 세로 쌓기 유지. 숫자만 조금 더 크게 */
@@ -276,6 +278,9 @@ TEMPLATE = r"""<!DOCTYPE html>
     <label><span>시 · 군 · 구</span>
       <select id="sgg"><option value="">전체</option></select>
     </label>
+    <label id="dongwrap" hidden><span>읍면동 — 내 동네 먼저 (선택)</span>
+      <select id="dong"><option value="">선택 안 함</option></select>
+    </label>
     <label class="find"><span>기관명으로 찾기 (선택)</span>
       <input id="q" type="search" placeholder="예: 효사랑 · 비워두면 전체" autocomplete="off">
     </label>
@@ -323,6 +328,8 @@ const $bar  = document.getElementById('bar');
 const $list = document.getElementById('list');
 const $more = document.getElementById('more');
 const $q    = document.getElementById('q');
+const $dong = document.getElementById('dong');
+const $dongwrap = document.getElementById('dongwrap');
 const $only = document.getElementById('only');
 const $share= document.getElementById('share');
 const SAVE  = 'dolbom.pick';   // 마지막 선택 지역 (브라우저에만 저장)
@@ -344,6 +351,20 @@ function fillSgg(){
 }
 
 function fmt(n){ return Number(n).toFixed(1); }
+
+/* 읍면동 목록 — 시·군·구를 고른 뒤에만 보인다. 좌표가 없어 거리는 못 재지만
+   같은 동 기관을 먼저 보여주는 "내 동네 먼저"는 데이터 1종 안에서 가능하다 */
+function fillDong(){
+  const si=$sido.value, gg=$sgg.value;
+  $dong.innerHTML='<option value="">선택 안 함</option>';
+  if(si===''||gg===''){ $dongwrap.hidden=true; return; }
+  const set=new Set();
+  ITEMS.forEach(r=>{ if(r[F.sidoIx]===+si && r[F.sigungu]===gg && r[F.dong]) set.add(r[F.dong]); });
+  [...set].sort((a,b)=>a.localeCompare(b,'ko')).forEach(d=>{
+    const o=document.createElement('option'); o.value=d; o.textContent=d; $dong.appendChild(o);
+  });
+  $dongwrap.hidden = set.size===0;
+}
 
 function render(){
   $list.innerHTML=''; $more.hidden=true;
@@ -371,6 +392,11 @@ function render(){
   current = q? region.filter(r=> r[F.name].toLowerCase().includes(q)) : region;
   if($only.checked) current = current.filter(r=> r[F.ratio] < med);
 
+  // "내 동네 먼저" — 같은 읍면동을 위로, 그 안에서는 1인당 적은 순. 순위 번호(r.rank)는 지역 순위 그대로
+  const dg=$dong.value;
+  if(dg) current = current.slice().sort((a,b)=>
+      ((a[F.dong]===dg)?0:1)-((b[F.dong]===dg)?0:1) || a[F.ratio]-b[F.ratio] || b[F.cap]-a[F.cap]);
+
   if(current.length===0){
     $bar.innerHTML = where+' 주야간보호센터 '+region.length+'곳 중 '
       + (q? '<b>\''+esc($q.value.trim())+'\'</b>이 들어간 이름' : '')
@@ -384,6 +410,7 @@ function render(){
   $bar.innerHTML = where+' 주야간보호센터 <b>'+region.length+'곳</b>'
     + (cond.length? ' 중 <b>'+cond.join(' · ')+' '+current.length+'곳</b>' : '')
     + ' · '+sidoName+' 중간값 <b>'+fmt(med)+'명</b>'
+    + (dg? ' · <b>'+esc(dg)+'</b> '+current.filter(r=>r[F.dong]===dg).length+'곳 먼저' : '')
     + '<small class="hint">중간값 = 이 지역 기관을 줄 세웠을 때 한가운데 값 (개원 1년 미만 제외)</small>';
 
   expanded=false;
@@ -404,15 +431,18 @@ function meter(ratio, med, good){
 // 주소에 지역을 붙인다 (#서울특별시/관악구) → 링크를 보내면 같은 목록이 바로 열린다
 function setHash(){
   const s=DATA.sido[+$sido.value];
-  const h = s? '#'+encodeURIComponent(s)+'/'+encodeURIComponent($sgg.value) : '';
+  const h = s? '#'+encodeURIComponent(s)+'/'+encodeURIComponent($sgg.value)
+              + ($dong.value? '/'+encodeURIComponent($dong.value) : '') : '';
   history.replaceState(null,'',location.pathname+location.search+h);
 }
 function fromHash(){
   try{
     const h=decodeURIComponent(location.hash.slice(1)); if(!h) return false;
-    const [s,g]=h.split('/'); const ix=DATA.sido.indexOf(s); if(ix<0) return false;
+    const [s,g,d]=h.split('/'); const ix=DATA.sido.indexOf(s); if(ix<0) return false;
     $sido.value=String(ix); fillSgg();
     if(g && [...$sgg.options].some(o=>o.value===g)) $sgg.value=g;
+    fillDong();
+    if(d && [...$dong.options].some(o=>o.value===d)) $dong.value=d;
     render(); return true;
   }catch(e){ return false; }
 }
@@ -423,7 +453,7 @@ function share(){
 }
 
 function savePick(){
-  try{ localStorage.setItem(SAVE, JSON.stringify({s: DATA.sido[+$sido.value]||'', g: $sgg.value})); }catch(e){}
+  try{ localStorage.setItem(SAVE, JSON.stringify({s: DATA.sido[+$sido.value]||'', g: $sgg.value, d: $dong.value})); }catch(e){}
 }
 function restorePick(){
   try{
@@ -431,6 +461,8 @@ function restorePick(){
     const ix=DATA.sido.indexOf(p.s); if(ix<0) return;
     $sido.value=String(ix); fillSgg();
     if(p.g && [...$sgg.options].some(o=>o.value===p.g)) $sgg.value=p.g;
+    fillDong();
+    if(p.d && [...$dong.options].some(o=>o.value===p.d)) $dong.value=p.d;
     render();
   }catch(e){}
 }
@@ -468,7 +500,8 @@ function draw(){
       +     '<span class="unit">명</span></div>'
       +   '<p class="calc">정원 '+r[F.cap]+'명 &divide; 요양보호사 '+r[F.care]+'명</p>'
       +   meter(ratio, med, good)
-      +   '<p class="verdict"><span class="chip'+(good?' good':'')+'">'+cmp+'</span></p>'
+      +   '<p class="verdict"><span class="chip'+(good?' good':'')+'">'+cmp+'</span>'
+      +     (($dong.value && r[F.dong]===$dong.value)? '<span class="chip near">내 동네</span>' : '')+'</p>'
       +   note
       +   '<p class="tags"><b>인력</b> <i>'+tags.join(' · ')+'</i></p>'
       +   '<div class="act">'
@@ -488,8 +521,9 @@ function draw(){
 
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
-$sido.addEventListener('change',()=>{ fillSgg(); render(); savePick(); setHash(); });
-$sgg .addEventListener('change', ()=>{ render(); savePick(); setHash(); });
+$sido.addEventListener('change',()=>{ fillSgg(); fillDong(); render(); savePick(); setHash(); });
+$sgg .addEventListener('change', ()=>{ fillDong(); render(); savePick(); setHash(); });
+$dong.addEventListener('change', ()=>{ render(); savePick(); setHash(); });
 $q   .addEventListener('input', render);
 $only.addEventListener('change', render);
 $share.addEventListener('click', share);
