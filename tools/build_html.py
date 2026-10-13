@@ -263,6 +263,9 @@ TEMPLATE = r"""<!DOCTYPE html>
   .chip.gr{background:transparent;border:1.5px solid var(--line);color:var(--mute);font-weight:700}
   .chip.gr b{color:var(--ink);font-weight:800}
   .chip.gr.none{border-style:dashed}
+  /* 규모 표식. 요양보호사 2명 이하면 1인당 수치가 한 사람 입·퇴사로 크게 흔들린다.
+     순위에서 빼지 않는다 — 빼면 작은 기관을 보호자 눈에서 지우는 일이다. 대신 보이게 한다. */
+  .chip.small{background:transparent;border:1.5px dashed var(--line);color:var(--mute);font-weight:700}
   .verdict{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
   @media (prefers-color-scheme:dark){ .chip.good{color:#5fd3b8} }  /* 어두운 바탕에서 배지 글자 대비 확보 */
 
@@ -423,6 +426,8 @@ TEMPLATE = r"""<!DOCTYPE html>
     <div class="toggles">
       <label><input id="only" type="checkbox"> 중간값보다 적은 곳만</label>
       <label><input id="onlyab" type="checkbox"> 공단 평가 A·B등급만</label>
+      <label><input id="hidesmall" type="checkbox"> 요양보호사 3명 이상만</label>
+      <label><input id="onlytel" type="checkbox"> 전화번호 있는 곳만</label>
       <label id="feeopts" hidden><input id="feeon" type="checkbox"> 비용 함께 보기</label>
     </div>
     <button id="share" class="share" type="button" hidden>이 결과 링크 복사</button>
@@ -484,6 +489,8 @@ const $feeopts=document.getElementById('feeopts'), $feeon=document.getElementByI
 const $feepick=document.getElementById('feepick'), $grade=document.getElementById('grade');
 const $only = document.getElementById('only');
 const $onlyab = document.getElementById('onlyab');
+const $hidesmall = document.getElementById('hidesmall');
+const $onlytel = document.getElementById('onlytel');
 const $share= document.getElementById('share');
 const SAVE  = 'dolbom.pick';   // 마지막 선택 지역 (브라우저에만 저장)
 
@@ -590,6 +597,11 @@ function render(){
   // 공단 평가등급 필터. 평가 이력이 없는 기관은 여기서 전부 빠지므로 아래에서 몇 곳이 빠졌는지 밝힌다
   const noEval = region.filter(r=> !r[F.grade]).length;
   if($onlyab.checked) current = current.filter(r=> r[F.grade]==='A' || r[F.grade]==='B');
+  // 규모 — ①(정원·요양보호사)을 걸러보기에도 쓴다. 순위 계산은 건드리지 않는다.
+  if($hidesmall.checked) current = current.filter(r=> r[F.care]>=3);
+  // 전화번호 — ③을 걸러보기에 쓴다. 바로 전화할 곳만 추리려는 사람을 위해.
+  const noTel = region.filter(r=> !r[F.tel]).length;
+  if($onlytel.checked) current = current.filter(r=> r[F.tel]);
 
   // "내 동네 먼저" — 같은 읍면동을 위로, 그 안에서는 1인당 적은 순. 순위 번호(r.rank)는 지역 순위 그대로
   const dg=$dong.value;
@@ -600,6 +612,8 @@ function render(){
   if(q) cond.push('\''+esc($q.value.trim())+'\'');
   if($only.checked) cond.push('중간값보다 적은 곳');
   if($onlyab.checked) cond.push('평가 A·B등급');
+  if($hidesmall.checked) cond.push('요양보호사 3명 이상');
+  if($onlytel.checked) cond.push('전화번호 있는 곳');
 
   if(current.length===0){
     $bar.innerHTML = where+' 주야간보호센터 '+region.length+'곳 중 <b>'+cond.join(' · ')+'</b>에 해당하는 곳이 없습니다.'
@@ -613,6 +627,7 @@ function render(){
     + (dg? ' · <b>'+esc(dg)+'</b> '+current.filter(r=>r[F.dong]===dg).length+'곳 먼저' : '')
     + '<small class="hint">중간값 = 이 지역 기관을 줄 세웠을 때 한가운데 값 (개원 1년 미만 제외)'
     + ($onlyab.checked && noEval? '<br>이 지역 '+noEval+'곳은 공단 평가 이력이 없어 이 조건에서 빠져 있습니다.' : '')
+    + ($onlytel.checked && noTel? '<br>이 지역 '+noTel+'곳은 전화번호를 받지 못해 이 조건에서 빠져 있습니다.' : '')
     + '</small>'
     + feeLine();
 
@@ -763,6 +778,7 @@ function draw(){
       +   meter(ratio, med, good)
       +   '<p class="verdict"><span class="chip'+(good?' good':'')+'">'+cmp+'</span>'
       +     gradeChip(r)
+      +     (r[F.care]<=2? '<span class="chip small" title="요양보호사 '+r[F.care]+'명. 한 사람이 들고 나면 이 숫자가 크게 흔들립니다">작은 기관</span>' : '')
       +     (($dong.value && r[F.dong]===$dong.value)? '<span class="chip near">내 동네</span>' : '')+'</p>'
       +   '<p class="tags"><b>인력</b> <i>'+tags.join(' · ')+'</i></p>'
       +   '<div class="noteslot">'+note+'</div>'
@@ -809,6 +825,8 @@ $dong.addEventListener('change', ()=>{ render(); savePick(); setHash(); });
 $q   .addEventListener('input', render);
 $only.addEventListener('change', render);
 $onlyab.addEventListener('change', render);
+$hidesmall.addEventListener('change', render);
+$onlytel.addEventListener('change', render);
 if(FEE){
   $feeon.addEventListener('change', ()=>{ $feepick.hidden=!$feeon.checked; render(); });
   $grade.addEventListener('change', render);
