@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>발표 — 주야간보호센터 돌봄 밀도 비교</title>
+<style>
+  /* 크기 단위: --u = 화면 높이의 1%. 인쇄(PDF)에서는 1280×720 고정이라 7.2px */
+  :root{
+    --ink:#16243f; --accent:#0a6b5c; --line:#e3e6ec; --mute:#6b7382; --soft:#f6f8f9;
+    --u:1vh; --w:1vw;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:#fff;color:var(--ink);overflow:hidden;
+       font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,sans-serif}
+
+  .slide{display:none;width:calc(100*var(--w));height:calc(100*var(--u));
+         padding:calc(6*var(--u)) calc(8*var(--w)) calc(9*var(--u));
+         flex-direction:column;justify-content:center}
+  .slide.on{display:flex}
+
+  .kicker{font-size:calc(2.7*var(--u));color:var(--accent);font-weight:700;margin:0 0 calc(2*var(--u));letter-spacing:.02em}
+  h1{font-size:calc(9.5*var(--u));line-height:1.15;margin:0 0 calc(3*var(--u));letter-spacing:-.03em;word-break:keep-all}
+  h2{font-size:calc(6.6*var(--u));line-height:1.2;margin:0 0 calc(3.5*var(--u));letter-spacing:-.03em;word-break:keep-all}
+  p{font-size:calc(3.7*var(--u));line-height:1.5;margin:0 0 calc(1.6*var(--u));word-break:keep-all}
+  p.sub{color:var(--mute);font-size:calc(3.3*var(--u))}
+  ul{margin:0 0 calc(2*var(--u));padding-left:calc(3.4*var(--u))}
+  li{font-size:calc(3.9*var(--u));line-height:1.5;margin-bottom:calc(1.4*var(--u));word-break:keep-all}
+  b{color:var(--accent)}
+
+  .eq{display:inline-block;font-size:calc(4.8*var(--u));font-weight:700;
+      padding:calc(2*var(--u)) calc(3.6*var(--u));background:var(--soft);
+      border-left:calc(.9*var(--u)) solid var(--accent);margin:calc(1*var(--u)) 0 calc(3.5*var(--u))}
+
+  .cols{display:flex;gap:calc(2.5*var(--w));align-items:stretch;margin:calc(1*var(--u)) 0 calc(2*var(--u))}
+  .cols>div{flex:1;min-width:0}
+  .card{background:var(--soft);padding:calc(2.8*var(--u)) calc(3*var(--u));border-radius:calc(1.2*var(--u))}
+  .card h3{font-size:calc(2.9*var(--u));color:var(--mute);font-weight:400;margin:0 0 calc(1.2*var(--u))}
+  .card .v{font-size:calc(7.5*var(--u));font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .card .v.good{color:var(--accent)}
+  .card .v small{font-size:calc(3.4*var(--u));font-weight:400;color:var(--mute);letter-spacing:0}
+  .card p{font-size:calc(3*var(--u));margin:calc(1*var(--u)) 0 0;line-height:1.45}
+  .card ul{margin:0;padding-left:calc(3*var(--u))}
+  .card li{font-size:calc(3.3*var(--u));margin-bottom:calc(.8*var(--u))}
+
+  table{border-collapse:collapse;width:100%;margin:calc(1*var(--u)) 0 calc(2.5*var(--u));font-size:calc(3.7*var(--u))}
+  th,td{padding:calc(1.6*var(--u)) calc(1.8*var(--u));border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  th{color:var(--mute);font-weight:400;font-size:calc(3*var(--u))}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+  tr.hi td{font-weight:700;color:var(--accent)}
+
+  .note{font-size:calc(2.9*var(--u));color:var(--mute);line-height:1.5;margin-top:calc(2*var(--u))}
+  .box{font-size:calc(3.6*var(--u));padding:calc(2.2*var(--u)) calc(3.2*var(--u));background:var(--soft);
+       border-left:calc(.9*var(--u)) solid var(--accent);line-height:1.5;margin-top:calc(2.5*var(--u));word-break:keep-all}
+  .box.mute{border-left-color:var(--mute)}
+
+  .url{font-size:calc(6*var(--u));font-weight:700;color:var(--accent);word-break:break-all;margin:calc(1*var(--u)) 0 calc(.5*var(--u));letter-spacing:-.01em}
+  .steps{display:flex;gap:calc(2*var(--w));margin:calc(3*var(--u)) 0 calc(1*var(--u))}
+  .steps div{flex:1;background:var(--soft);padding:calc(2.6*var(--u)) calc(2*var(--u));border-radius:calc(1.2*var(--u));
+             font-size:calc(3.5*var(--u));line-height:1.4;text-align:center;word-break:keep-all}
+  .steps div b{display:block;font-size:calc(2.7*var(--u));color:var(--mute);margin-bottom:calc(1*var(--u));font-weight:400}
+
+  footer{position:fixed;bottom:calc(2.4*var(--u));left:0;right:0;display:flex;justify-content:space-between;
+         padding:0 calc(3*var(--w));font-size:calc(2.4*var(--u));color:var(--mute)}
+  .bar{position:fixed;top:0;left:0;height:calc(.6*var(--u));background:var(--accent);transition:width .15s}
+
+  /* 인쇄 = PDF 제출본. 슬라이드 1장 = 1280×720 한 페이지 */
+  @page{size:1280px 720px;margin:0}
+  @media print{
+    :root{--u:7.2px;--w:12.8px}
+    html,body{overflow:visible;height:auto}
+    .slide{display:flex !important;width:1280px;height:720px;page-break-after:always;break-after:page;overflow:hidden}
+    .slide:last-child{page-break-after:auto;break-after:auto}
+    footer,.bar{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="bar" id="bar"></div>
+
+<!-- 1 표지 -->
+<section class="slide on">
+  <p class="kicker">노인문제 해결을 위한 공공데이터 활용 서비스</p>
+  <h1>주야간보호센터<br>돌봄 밀도 비교</h1>
+  <p class="sub">요양보호사 한 명이 어르신 몇 분을 돌보는지로 비교합니다</p>
+  <p class="note">공공데이터 1종 · 전국 5,346곳 · 휴대폰으로 열리는 한 장짜리 웹페이지<br>신운종 · 2026-10-14</p>
+</section>
+
+<!-- 2 문제 -->
+<section class="slide">
+  <p class="kicker">누구의, 어떤 불편인가</p>
+  <h2>부모님 보낼 센터가 수십 곳인데<br>뭘 보고 골라야 할지 모르겠다</h2>
+  <div class="cols">
+    <div class="card"><h3>누가</h3><p><b>타지에 사는 50대 자녀</b><br>부모님은 지방에 혼자</p></div>
+    <div class="card"><h3>언제</h3><p>장기요양 등급 판정 뒤<br><b>몇 주 안에</b> 정해야 할 때</p></div>
+    <div class="card"><h3>지금은</h3><p>지도앱은 위치와 사진뿐<br>결국 <b>가까운 순</b>, 남의 말</p></div>
+  </div>
+  <div class="box">서울만 <b>523곳</b>. 한 구에도 수십 곳. 정답을 골라주는 게 아니라 <b>비교할 숫자 하나</b>를 줍니다.</div>
+</section>
+
+<!-- 3 지표 -->
+<section class="slide">
+  <p class="kicker">공공데이터 1종으로 만든 숫자 하나</p>
+  <h2>요양보호사 1명이<br>어르신 몇 분을 돌보는가</h2>
+  <div class="eq">정원 &divide; 요양보호사 수</div>
+  <div class="cols">
+    <div class="card"><h3>전국 범위</h3><div class="v">1.7<small> ~ </small>91<small>명</small></div></div>
+    <div class="card"><h3>전국 중앙값</h3><div class="v good">6.4<small>명</small></div></div>
+    <div class="card"><h3>서울 ↔ 세종</h3><div class="v">4.8<small> ↔ </small>7.5<small>명</small></div></div>
+  </div>
+  <p class="note">국민건강보험공단_장기요양기관 시설별 현황 · data.go.kr <b>15124763</b> · 기준일 2026-06-10 · 다른 데이터와 합치지 않음</p>
+</section>
+
+<!-- 4 차별점 -->
+<section class="slide">
+  <p class="kicker">공단 포털에 이미 있지 않나</p>
+  <h2>공단에 없는 축 하나만 더합니다</h2>
+  <div class="cols">
+    <div class="card"><h3>공단 「장기요양기관 찾기」에 있는 것</h3>
+      <ul><li>정원 구간 · 이용가능 여부</li><li>평가등급 · 거리순 정렬</li></ul></div>
+    <div class="card"><h3>없는 것</h3>
+      <ul><li><b>인력 규모로 줄 세우기</b></li><li>평가 없는 기관 40%도 비교</li></ul></div>
+  </div>
+  <div class="box">평가 결과 3,243곳을 대조하니 상관계수 <b>−0.18</b>. <b>A등급의 44%</b>는 인력이 평균 이하 — 서로 다른 정보입니다.</div>
+  <p class="note">평가 데이터는 비교 분석에만 썼고 서비스에는 넣지 않았습니다. 대체가 아니라 보완입니다.</p>
+</section>
+
+<!-- 5 시연 -->
+<section class="slide">
+  <p class="kicker">시연 — 휴대폰으로 엽니다</p>
+  <div class="url">dolbomok.pages.dev</div>
+  <p class="sub">입력은 두 번뿐입니다</p>
+  <div class="steps">
+    <div><b>①</b>시·도 선택</div>
+    <div><b>②</b>시·군·구 선택</div>
+    <div><b>③</b>1인당 적은 순 10곳<br>+ 시·도 중앙값 비교</div>
+    <div><b>④</b>전화번호 찾아보기</div>
+  </div>
+  <p class="note">전국 5,346곳 · 238개 시군구 · 서버 없음 (HTML 파일 하나) · 빈 결과도 안내 문구로 처리</p>
+</section>
+
+<!-- 6 검증에서 찾은 것 -->
+<section class="slide">
+  <p class="kicker">검증에서 찾은 것</p>
+  <h2>이상한 숫자를 따라가 보니<br>갓 문을 연 기관이었습니다</h2>
+  <table>
+    <tr><th>개원 후 경과</th><th class="n">1인당 중앙값</th><th class="n">20명 초과 비율</th></tr>
+    <tr class="hi"><td>0 ~ 2개월</td><td class="n">11.0명</td><td class="n">34%</td></tr>
+    <tr><td>1 ~ 3년</td><td class="n">7.0명</td><td class="n">2.6%</td></tr>
+    <tr class="hi"><td>10년 이상</td><td class="n">6.2명</td><td class="n">0.6%</td></tr>
+  </table>
+  <div class="box">데이터 오류가 아니라 <b>지표가 신규 기관에 불리한 구조</b> → 숨기지 않고 <b>537곳에 안내 표시</b>, 중앙값은 <b>운영 1년 이상</b> 기관만으로 계산</div>
+</section>
+
+<!-- 7 숫자 대조 -->
+<section class="slide">
+  <p class="kicker">화면 숫자가 원본과 같은가</p>
+  <h2>5,346곳 전부 대조했습니다</h2>
+  <div class="cols">
+    <div class="card"><h3>기관별 정원 · 인력 · 1인당</h3><div class="v good">0<small>건 불일치</small></div></div>
+    <div class="card"><h3>시·도 중앙값 17개</h3><div class="v good">0<small>건 불일치</small></div></div>
+    <div class="card"><h3>시연 Top 3 원본 행 직접 대조</h3><div class="v good">3<small> / 3 일치</small></div></div>
+  </div>
+  <p class="note">배포본에 박힌 숫자를 꺼내 원본 파일에서 따로 다시 계산했습니다 — 만든 코드를 재사용하지 않고. 기록은 PLAN.md 6번.</p>
+</section>
+
+<!-- 8 한계 -->
+<section class="slide">
+  <p class="kicker">한계</p>
+  <h2>이 숫자는 돌봄 품질을<br>보증하지 않습니다</h2>
+  <ul>
+    <li>정원은 실제 이용 인원이 아니라 <b>인가받은 최대 인원</b></li>
+    <li>요양보호사 수는 <b>기관이 신고한 값</b></li>
+    <li>자료는 <b>반기</b>마다 갱신 (기준일 2026-06-10)</li>
+  </ul>
+  <div class="box mute">화면에도 <b>"비교의 출발점"</b>이라고 적었습니다.<br>수십 곳을 <b>다섯 곳으로 줄여주는 것</b>, 거기까지가 이 서비스입니다.</div>
+</section>
+
+<footer>
+  <span>주야간보호센터 돌봄 밀도 비교</span>
+  <span><span id="cur">1</span> / <span id="tot">8</span> &nbsp;·&nbsp; ← → 로 이동</span>
+</footer>
+
+<script>
+const S=[...document.querySelectorAll('.slide')];
+let i=0;
+document.getElementById('tot').textContent=S.length;
+function go(n){
+  i=Math.max(0,Math.min(S.length-1,n));
+  S.forEach((s,k)=>s.classList.toggle('on',k===i));
+  document.getElementById('cur').textContent=i+1;
+  document.getElementById('bar').style.width=((i+1)/S.length*100)+'%';
+}
+addEventListener('keydown',e=>{
+  if(['ArrowRight','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();go(i+1)}
+  if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();go(i-1)}
+  if(e.key==='Home')go(0); if(e.key==='End')go(S.length-1);
+});
+addEventListener('click',e=>{ if(e.target.closest('a'))return; go(i+1) });
+go(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+﻿# 임시·캐시
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+~$*
+
+# 배포 도구 캐시 (계정 정보 포함)
+.wrangler/
