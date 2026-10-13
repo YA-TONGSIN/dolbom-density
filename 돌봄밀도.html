@@ -19,23 +19,24 @@
      ============================================================== */
   /* 토스·당근 계열 소비자 앱 문법: 연회색 바탕 위 흰 카드, 테두리 대신 여백과 그림자로 구분 */
   :root{
-    --ink:#191f28;         /* 글자 — 거의 검정 (토스 grey900 계열) */
-    --mute:#4e5968;        /* 보조 글자 — 흰 바탕 대비 7:1 */
+    /* Claude Design 1차 시안(10-13) 팔레트 — 따뜻한 크림 중립색. 색상은 여전히 흰/검정/틸 셋 */
+    --ink:#1b2220;         /* 글자 — 거의 검정(녹색기) */
+    --mute:#5e5850;        /* 보조 글자 — 따뜻한 회갈색, 크림 바탕 대비 6.5:1 */
     --accent:#0a6b5c;      /* 강조 1색 — 틸 (브랜드색 하나) */
     --accent-deep:#07564a; /* 강조색 짙은 단계 (호버) */
-    --accent-wash:#e6f2ef; /* 강조색 가장 옅은 단계 (배지·포커스 링) */
+    --accent-wash:#e3f0ea; /* 강조색 가장 옅은 단계 (배지) */
     --on-accent:#ffffff;   /* 강조색 위에 올리는 글자 */
-    --bg:#f2f4f6;          /* 페이지 바탕 — 연회색 */
+    --bg:#fbf7f0;          /* 페이지 바탕 — 크림 */
     --card:#ffffff;        /* 카드 */
-    --field:#f2f4f6;       /* 입력창 채움 (테두리 없음) */
-    --soft:#f2f4f6;        /* 면 (호환) */
-    --line:#e5e8eb;        /* 아주 옅은 구분 (최소 사용) */
-    --hair:rgba(25,31,40,.05);  /* 카드 테두리 — 그림자만으로는 가장자리가 흐려서 한 겹 더 */
-    --track:#d1d6db;            /* 토글 꺼짐 */
-    --ph:#8b95a1;               /* 입력 안내문 */
-    /* 층위 있는 그림자 — 가까운 그림자 + 먼 그림자를 겹쳐 깊이를 만든다 */
-    --shadow:0 1px 2px rgba(25,31,40,.04), 0 2px 10px rgba(25,31,40,.05);
-    --shadow-lift:0 2px 4px rgba(25,31,40,.04), 0 10px 28px rgba(25,31,40,.08);
+    --field:#ffffff;       /* 입력창 — 흰 바탕에 따뜻한 테두리 */
+    --soft:#f0eae2;        /* 면 (안내 상자·중립 배지) */
+    --line:#e6ddcf;        /* 구분선·입력 테두리 — 크림보다 한 단계 짙게 */
+    --hair:rgba(27,34,32,.06);  /* 카드 테두리 */
+    --track:#c9d0cd;            /* 토글 꺼짐·막대 트랙 */
+    --ph:#9a938a;               /* 입력 안내문 */
+    /* 층위 있는 그림자 — 따뜻한 그림자색 */
+    --shadow:0 1px 2px rgba(60,48,30,.05), 0 2px 10px rgba(60,48,30,.06);
+    --shadow-lift:0 2px 4px rgba(60,48,30,.05), 0 10px 28px rgba(60,48,30,.10);
     --t-fast:.15s cubic-bezier(.2,.8,.2,1);   /* 상태 전환 (장식 아님) */
 
     /* 가독성 바닥: 화면에 보이는 UI 글자는 15px 아래로 내려가지 않는다 (사용자 50대). 13은 푸터용 */
@@ -49,12 +50,12 @@
   :root{color-scheme:light dark}
   @media (prefers-color-scheme:dark){
     :root{
-      --ink:#e9edf2; --mute:#9aa6b4;
+      --ink:#f3efe8; --mute:#b6aea3;
       /* 밝은 틸 위에는 흰 글자 대비가 모자라 어두운 글자를 쓴다 */
-      --accent:#35b89c; --accent-deep:#2aa88d; --accent-wash:rgba(53,184,156,.16); --on-accent:#0d1f1b;
-      --bg:#14171c; --card:#1c2026; --field:#242931; --soft:#242931;
-      --line:rgba(255,255,255,.08); --hair:rgba(255,255,255,.06);
-      --track:#3a414b; --ph:#79838f;
+      --accent:#5cc4b0; --accent-deep:#4fb39f; --accent-wash:#15241f; --on-accent:#0f1a17;
+      --bg:#171513; --card:#221f1b; --field:#2a2622; --soft:#2a2622;
+      --line:#3b3530; --hair:rgba(255,255,255,.05);
+      --track:#3b3530; --ph:#7d766c;
       --shadow:0 1px 2px rgba(0,0,0,.3), 0 2px 10px rgba(0,0,0,.25);
       --shadow-lift:0 2px 4px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
     }
@@ -75,8 +76,9 @@
   }
 
   /* 전체 세로 리듬을 그리드 gap 하나로 통제한다 (요소별 margin 사용 안 함) */
+  /* 폭 1180 — 데스크톱에서 카드를 3열로 놓기 위해 (시안 1c) */
   .wrap{
-    max-width:720px;margin:0 auto;padding:var(--s4) var(--s3) var(--s6);
+    max-width:1180px;margin:0 auto;padding:var(--s4) var(--s3) var(--s6);
     display:grid;grid-template-columns:minmax(0,1fr);row-gap:var(--s4);
     overflow-wrap:anywhere;
   }
@@ -95,13 +97,14 @@
     background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--hair);
     padding:var(--s4);display:grid;row-gap:var(--s3);
   }
-  .pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--s3)}
+  /* 시·도 / 시·군·구 / 기관명 — 넓으면 한 줄 3칸, 좁으면 세로 (시안 1c) */
+  .pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--s3)}
   .pick label,.find label{display:grid;row-gap:var(--s1);min-width:0}
   .pick span,.find span{font-size:var(--t-sm);color:var(--ink);font-weight:700}
   /* 입력창 — 회색 채움, 테두리 없음 (토스 문법) */
   select,.find input{
     width:100%;padding:15px 16px;font-size:var(--t-base);font-family:inherit;font-weight:600;
-    color:var(--ink);background:var(--field);border:2px solid transparent;border-radius:var(--r-sm);
+    color:var(--ink);background:var(--field);border:1.5px solid var(--line);border-radius:var(--r-sm);
     transition:background var(--t-fast),border-color var(--t-fast);
   }
   .find input::placeholder{color:var(--ph);font-weight:400}
@@ -125,7 +128,7 @@
   .opts input[type=checkbox]:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
   button.share{
     padding:11px 16px;font-size:var(--t-sm);font-family:inherit;font-weight:700;
-    color:var(--ink);background:var(--field);border:0;
+    color:var(--ink);background:var(--soft);border:1px solid var(--line);
     border-radius:999px;cursor:pointer;white-space:nowrap;transition:background var(--t-fast);
   }
   button.share:hover{background:var(--line)}
@@ -141,28 +144,26 @@
   .bar b{font-size:19px;font-weight:800}
   .bar small.hint{display:block;margin-top:4px;font-size:var(--t-xs);color:var(--mute);font-weight:400;line-height:1.45}
 
-  /* 결과 — 카드 하나가 기관 하나 */
-  ol{list-style:none;padding:0;display:grid;row-gap:var(--s3)}
+  /* 결과 — 카드 하나가 기관 하나. 넓으면 3열, 중간 2열, 휴대폰 1열 (시안 1c) */
+  ol{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--s3)}
   li{
     background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--hair);
     padding:var(--s4);transition:box-shadow var(--t-fast),transform var(--t-fast);
   }
   li:hover{box-shadow:var(--shadow-lift);transform:translateY(-1px)}
 
-  .row{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:var(--s3);align-items:start}
-  .rank{
-    width:30px;height:30px;border-radius:50%;background:var(--field);
-    display:grid;place-items:center;margin-top:3px;
-    font-size:var(--t-xs);font-weight:800;color:var(--mute);font-variant-numeric:tabular-nums;
-  }
-  .body{display:grid;row-gap:10px;min-width:0}
+  /* 카드 안 구성(시안): N위 + 기관명 → 주소 → "요양보호사 1명이 돌보는 어르신" → 큰 숫자 → 근거 → 막대 → 배지 → 인력 → 행동 */
+  .row{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;align-items:baseline}
+  .rank{font-size:var(--t-sm);font-weight:800;color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .body{display:grid;row-gap:8px;min-width:0;grid-column:1 / -1}
   .name{font-size:var(--t-md);font-weight:700;word-break:keep-all;line-height:1.3}
   .where{font-size:var(--t-sm);color:var(--mute);word-break:keep-all;line-height:1.5}
+  .cap{font-size:var(--t-sm);color:var(--mute);margin-top:4px}
 
-  .big{display:flex;align-items:baseline;gap:8px}
-  .num{font-size:40px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-0.045em}
+  .big{display:flex;align-items:baseline;gap:6px}
+  .num{font-size:44px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-0.045em}
   .num.good{color:var(--accent)}
-  .unit{font-size:var(--t-sm);color:var(--mute);font-weight:600}
+  .unit{font-size:var(--t-base);color:var(--ink);font-weight:700}
   .calc{font-size:var(--t-sm);color:var(--mute)}
 
   /* 판정 배지 — 채움형 알약. 중간값 수치는 위 기준선에 있으므로 여기선 방향만 */
@@ -174,17 +175,9 @@
   .chip.good{background:var(--accent-wash);color:var(--accent-deep)}
   @media (prefers-color-scheme:dark){ .chip.good{color:#5fd3b8} }  /* 어두운 바탕에서 배지 글자 대비 확보 */
 
-  /* 넓은 화면 — 좌:우 = 1.618 : 1 (황금분할) */
-  @media (min-width:600px){
-    .body{
-      grid-template-columns:1.618fr 1fr;column-gap:var(--s4);
-      grid-template-areas:"name big" "where big" "calc big" "meter big" "verdict big" "note note" "tags tags" "act act";
-    }
-    .name{grid-area:name}.where{grid-area:where}.calc{grid-area:calc}.meter{grid-area:meter}
-    .verdict{grid-area:verdict}.new{grid-area:note}.tags{grid-area:tags}.act{grid-area:act}
-    .big{grid-area:big;flex-direction:column;align-items:flex-end;gap:0;text-align:right}
-    .num{font-size:52px}
-    .unit{font-size:var(--t-sm)}
+  /* 넓은 화면 — 카드가 3열로 서므로 카드 안은 세로 쌓기 유지. 숫자만 조금 더 크게 */
+  @media (min-width:900px){
+    .num{font-size:48px}
   }
 
   /* 중간값 대비 막대 — 가운데 눈금이 해당 시·도 중간값. 수치는 안 적고 "중간값" 한 단어만 */
@@ -194,11 +187,12 @@
   .meter .fill.good{background:var(--accent)}
   .meter .tick{position:absolute;left:50%;top:-6px;bottom:-6px;width:2px;background:var(--ink);border-radius:1px}
   .meter .lab{display:grid;grid-template-columns:1fr auto 1fr;font-size:var(--t-xs);color:var(--mute)}
-  .meter .lab span:nth-child(2){justify-self:center;font-weight:700;color:var(--ink)}
+  .meter .lab span:nth-child(2){justify-self:center;font-weight:700;color:var(--mute)}
   .meter .lab span:last-child{justify-self:end}
 
   .tags{font-size:var(--t-sm);color:var(--mute);line-height:1.5}
-  .tags i{font-style:normal}
+  .tags i{font-style:normal;color:var(--ink)}
+  .tags b{font-weight:700;color:var(--mute);margin-right:6px}
 
   .new{
     font-size:var(--t-sm);padding:var(--s3) 15px;border-radius:var(--r-sm);
@@ -207,7 +201,8 @@
   .new b{font-weight:700}
 
   /* 행동 — 주 버튼은 크고 둥글게 (높이 52), 보조는 글자 링크 */
-  .act{display:grid;row-gap:var(--s2);justify-items:start;padding-top:var(--s1)}
+  .act{display:grid;row-gap:var(--s2);justify-items:stretch;padding-top:var(--s1)}
+  .act a.go{text-align:center}
   a.go{
     display:inline-block;padding:15px 24px;font-size:var(--t-base);font-weight:700;
     color:var(--on-accent);background:var(--accent);border-radius:var(--r-sm);text-decoration:none;
@@ -255,7 +250,7 @@
   <header class="head">
     <p class="eyebrow">공공데이터 1종 · 전국 5,346곳</p>
     <h1>주야간보호센터 돌봄 밀도 비교</h1>
-    <p class="lede">요양보호사 한 명이 어르신 몇 분을 돌보는지로 비교합니다.</p>
+    <p class="lede">요양보호사 한 명이 어르신 몇 분을 돌보는지로 비교합니다. 숫자가 적을수록 한 분께 더 많은 손길이 갑니다.</p>
   </header>
 
   <div class="panel">
@@ -266,10 +261,7 @@
     <label><span>시 · 군 · 구</span>
       <select id="sgg"><option value="">전체</option></select>
     </label>
-  </div>
-
-  <div class="find">
-    <label><span>기관명으로 찾기 (선택)</span>
+    <label class="find"><span>기관명으로 찾기 (선택)</span>
       <input id="q" type="search" placeholder="예: 효사랑 · 비워두면 전체" autocomplete="off">
     </label>
   </div>
@@ -390,7 +382,7 @@ function meter(ratio, med, good){
   return '<div class="meter" title="가운데 눈금이 '+fmt(med)+'명(중간값)"><div class="track">'
     + '<div class="fill'+(good?' good':'')+'" style="width:'+pct.toFixed(1)+'%"></div>'
     + '<div class="tick"></div></div>'
-    + '<div class="lab"><span>적음</span><span>▲ 중간값</span><span>많음</span></div>'
+    + '<div class="lab"><span></span><span>중간값</span><span></span></div>'
     + '</div>';
 }
 
@@ -436,9 +428,10 @@ function draw(){
   $list.innerHTML = show.map((r,i)=>{
     const ratio=r[F.ratio], good = ratio < med;
     const tags=[];
-    if(r[F.nurse]>0) tags.push('간호인력 '+r[F.nurse]+'명');
+    // 시안의 "인력" 행 — 0명도 숨기지 않고 적는다 (없다는 정보도 정보)
+    tags.push('간호인력 '+r[F.nurse]+'명');
     if(r[F.rehab]>0) tags.push('물리·작업치료사 '+r[F.rehab]+'명');
-    if(r[F.social]>0) tags.push('사회복지사 '+r[F.social]+'명');
+    tags.push('사회복지사 '+r[F.social]+'명');
 
     // 중간값 수치는 상단 기준선에 한 번만. 카드에서는 방향만 말한다 (중복 제거)
     const cmp = good ? '중간값보다 적습니다' : '중간값보다 많습니다';
@@ -451,17 +444,18 @@ function draw(){
 
     const q=encodeURIComponent(r[F.name]+' '+r[F.sigungu]);
     return '<li><div class="row">'
-      + '<div class="rank">'+r.rank+'</div>'
+      + '<div class="rank">'+r.rank+'위</div>'
+      + '<p class="name">'+esc(r[F.name])+'</p>'
       + '<div class="body">'
-      +   '<p class="name">'+esc(r[F.name])+'</p>'
       +   '<p class="where">'+esc(r[F.sigungu]+' '+r[F.addr])+'</p>'
+      +   '<p class="cap">요양보호사 1명이 돌보는 어르신</p>'
       +   '<div class="big"><span class="num'+(good?' good':'')+'">'+fmt(ratio)+'</span>'
-      +     '<span class="unit">명 / 요양보호사 1명</span></div>'
+      +     '<span class="unit">명</span></div>'
       +   '<p class="calc">정원 '+r[F.cap]+'명 &divide; 요양보호사 '+r[F.care]+'명</p>'
       +   meter(ratio, med, good)
       +   '<p class="verdict"><span class="chip'+(good?' good':'')+'">'+cmp+'</span></p>'
       +   note
-      +   (tags.length? '<p class="tags"><i>'+tags.join(' · ')+'</i></p>' : '')
+      +   '<p class="tags"><b>인력</b> <i>'+tags.join(' · ')+'</i></p>'
       +   '<div class="act">'
       +   '<a class="go" target="_blank" rel="noopener noreferrer" '
       +     'href="https://search.naver.com/search.naver?query='+q+'">전화번호 찾아보기</a>'
