@@ -112,6 +112,8 @@
   .find{display:grid}
 
   .opts{display:grid;grid-template-columns:1fr auto;gap:var(--s2) var(--s3);align-items:center;font-size:var(--t-base)}
+  /* 토글은 한 덩어리 — 공유 버튼과 섞이지 않게 */
+  .toggles{display:grid;row-gap:var(--s2);min-width:0}
   .opts label{display:flex;align-items:center;gap:11px;cursor:pointer;font-weight:600}
   /* 토글 스위치 — 체크박스를 그대로 쓰되 모양만 바꾼다 (접근성·키보드 유지) */
   .opts input[type=checkbox]{
@@ -332,17 +334,15 @@
     </label>
   </div>
 
+  <!-- 걸러보기 토글은 한 묶음으로 둔다. 공유 버튼이 토글 사이에 끼면
+       "고르는 것"과 "내보내는 것"이 섞여 읽힌다 (좁은 화면에서 특히). -->
   <div class="opts">
-    <label><input id="only" type="checkbox"> 중간값보다 적은 곳만</label>
+    <div class="toggles">
+      <label><input id="only" type="checkbox"> 중간값보다 적은 곳만</label>
+      <label><input id="onlyab" type="checkbox"> 공단 평가 A·B등급만</label>
+      <label id="feeopts" hidden><input id="feeon" type="checkbox"> 비용 함께 보기</label>
+    </div>
     <button id="share" class="share" type="button" hidden>이 결과 링크 복사</button>
-  </div>
-
-  <div class="opts">
-    <label><input id="onlyab" type="checkbox"> 공단 평가 A·B등급만</label>
-  </div>
-
-  <div class="opts" id="feeopts" hidden>
-    <label><input id="feeon" type="checkbox"> 비용 함께 보기</label>
   </div>
   <div class="pick" id="feepick" hidden>
     <label><span>부모님 장기요양 등급</span><select id="grade"></select></label>

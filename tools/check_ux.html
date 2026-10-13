@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>UX·기능 동작 검증</title>
+<style>
+  body{margin:0;background:#1f1f1f;color:#e8e8e8;font-family:Consolas,"Malgun Gothic",monospace;font-size:14px}
+  #out{padding:16px;white-space:pre;line-height:1.65}
+  .ok{color:#6ee7b7}.bad{color:#fca5a5}
+  iframe{position:fixed;left:-9999px;width:390px;height:1400px}
+</style>
+</head>
+<body>
+<div id="out">실행 중…</div>
+<iframe id="app" src="../build/index.html"></iframe>
+<script>
+/* 화면을 실제로 조작해서 결과를 읽는다 — "되는지 확인했다"를 말이 아니라 기록으로 남기기 위해.
+   --allow-file-access-from-files 로 띄울 것. */
+const log = [];
+let fails = 0;
+function chk(name, cond, detail){
+  log.push((cond ? '  OK   ' : '  ###  ') + name + (detail ? '   → ' + detail : ''));
+  if(!cond) fails++;
+}
+function run(){
+  const f = document.getElementById('app');
+  const d = f.contentDocument, w = f.contentWindow;
+  if(!d){ document.getElementById('out').textContent = '접근 실패'; return; }
+  const $ = s => d.querySelector(s);
+  const n = s => d.querySelectorAll(s).length;
+  const fire = (el, ev) => el.dispatchEvent(new w.Event(ev, {bubbles:true}));
+  const bar = () => $('#bar').textContent;
+  const sel = (el, v) => { el.value = v; fire(el, 'change'); };
+
+  log.push('【초기 상태】');
+  chk('아무것도 안 고르면 안내 문구', /지역을 선택/.test(bar()), bar().slice(0,30));
+  chk('목록 비어 있음', n('#list li') === 0);
+
+  log.push('');
+  log.push('【시·도 → 시·군·구 : 입력 2번】');
+  const si = $('#sido'), sg = $('#sgg');
+  sel(si, String([...si.options].findIndex(o => o.textContent === '서울특별시') - 0 - 1 + 1 - 1));
+  // 값은 인덱스 문자열이라 안전하게 다시 찾는다
+  const seoulOpt = [...si.options].find(o => o.textContent === '서울특별시');
+  sel(si, seoulOpt.value);
+  chk('시·도 선택 시 시·군·구 목록 채워짐', sg.options.length > 10, sg.options.length + '개');
+  sel(sg, '관악구');
+  const total = n('#list li');
+  chk('관악구 결과 표시', total > 0, total + '곳 (첫 화면)');
+  chk('요약 바에 지역·중간값', /관악구/.test(bar()) && /중간값/.test(bar()));
+  chk('평가등급 배지가 모든 카드에', n('#list .chip.gr') === total, n('#list .chip.gr') + '/' + total);
+  const first = $('#list li .name').textContent.trim();
+  log.push('       1위: ' + first);
+  log.push('       1위 등급: ' + $('#list li .chip.gr').textContent.trim());
+
+  log.push('');
+  log.push('【필터 — 단독 / 조합】');
+  const only = $('#only'), onlyab = $('#onlyab');
+  only.checked = true; fire(only, 'change');
+  const a = n('#list li');
+  chk('중간값 필터 단독 동작', a > 0 && a <= total, total + ' → ' + a + '곳');
+  only.checked = false; fire(only, 'change');
+  onlyab.checked = true; fire(onlyab, 'change');
+  const b = n('#list li');
+  chk('평가등급 필터 단독 동작', b > 0, total + ' → ' + b + '곳');
+  chk('등급 필터 시 A·B만 남음',
+      [...d.querySelectorAll('#list .chip.gr')].every(c => /A등급|B등급/.test(c.textContent)));
+  chk('평가 이력 없는 곳이 빠진다고 안내', /평가 이력이 없어/.test(bar()));
+  only.checked = true; fire(only, 'change');
+  const c = n('#list li');
+  chk('두 필터 동시 적용', c <= Math.min(a, b), '교집합 ' + c + '곳');
+  chk('요약 바에 조건 두 개 표기', /중간값보다 적은 곳/.test(bar()) && /A·B등급/.test(bar()));
+
+  log.push('');
+  log.push('【없는 조건 — 깨지지 않는가】');
+  const q = $('#q');
+  q.value = '존재하지않는이름zzz'; fire(q, 'input');
+  chk('없는 이름 → 안내 문구', /없습니다/.test(bar()), bar().slice(0,46));
+  chk('없는 이름 → 안내 카드 1개', n('#list li.empty') === 1);
+  chk('화면 안 깨짐 (목록 영역 유지)', !!$('#list'));
+  q.value = ''; fire(q, 'input');
+  only.checked = false; fire(only, 'change');
+  onlyab.checked = false; fire(onlyab, 'change');
+  chk('조건 해제 시 전체 복귀', n('#list li') === total, n('#list li') + '곳');
+
+  log.push('');
+  log.push('【공유 링크 — 받은 사람이 같은 화면을 보는가】');
+  chk('주소에 지역이 붙음', /관악구/.test(decodeURIComponent(w.location.hash)), decodeURIComponent(w.location.hash));
+
+  log.push('');
+  log.push('【되돌리기 — 시·도 해제】');
+  sel(si, '');
+  chk('시·도 해제 시 안내 복귀', /지역을 선택/.test(bar()));
+  chk('목록 비움', n('#list li') === 0);
+
+  const el = document.getElementById('out');
+  el.textContent = log.join('\n') + '\n\n' + (fails ? '### 실패 ' + fails + '건' : '전 항목 통과 (' + log.filter(l=>/OK /.test(l)).length + '건)');
+  el.className = fails ? 'bad' : 'ok';
+}
+document.getElementById('app').addEventListener('load', () => setTimeout(run, 700));
+</script>
+</body>
+</html>
