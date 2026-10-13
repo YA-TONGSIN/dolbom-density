@@ -6,8 +6,10 @@
 <title>발표 — 주야간보호센터 돌봄 밀도 비교</title>
 <style>
   /* 크기 단위: --u = 화면 높이의 1%. 인쇄(PDF)에서는 1280×720 고정이라 7.2px */
+  /* 색 토큰은 서비스 화면(돌봄밀도)과 동일 — 같은 디자인 시스템 */
   :root{
-    --ink:#16243f; --accent:#0a6b5c; --line:#e3e6ec; --mute:#6b7382; --soft:#f6f8f9;
+    --ink:#16243f; --accent:#0a6b5c; --accent-deep:#07564a; --accent-wash:#e8f1ee;
+    --line:#dfe6e7; --mute:#697585; --soft:#f4f7f7;
     --u:1vh; --w:1vw;
   }
   *{box-sizing:border-box}
@@ -15,9 +17,30 @@
   body{background:#fff;color:var(--ink);overflow:hidden;
        font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,sans-serif}
 
+  /* ===== 배경: 천천히 도는 3D 와이어프레임 큐브 패턴 =====================
+     읽기를 방해하지 않는 것이 1순위라 선만 남기고 투명도를 매우 낮췄다.
+     외부 라이브러리 없이 CSS 3D만 사용 — 오프라인에서도 그대로 동작한다. */
+  .bg{position:fixed;inset:0;z-index:0;overflow:hidden;perspective:1100px;pointer-events:none}
+  .cube{position:absolute;transform-style:preserve-3d;animation:spin linear infinite}
+  .cube .f{position:absolute;inset:0;border:1px solid var(--accent);opacity:.1;border-radius:2px}
+  /* 6면 — 각 면을 큐브 반지름만큼 밀어 입체를 만든다 */
+  .cube .f:nth-child(1){transform:translateZ(var(--h))}
+  .cube .f:nth-child(2){transform:rotateY(180deg) translateZ(var(--h))}
+  .cube .f:nth-child(3){transform:rotateY(90deg)  translateZ(var(--h))}
+  .cube .f:nth-child(4){transform:rotateY(-90deg) translateZ(var(--h))}
+  .cube .f:nth-child(5){transform:rotateX(90deg)  translateZ(var(--h))}
+  .cube .f:nth-child(6){transform:rotateX(-90deg) translateZ(var(--h))}
+  @keyframes spin{
+    from{transform:rotateX(0deg) rotateY(0deg)}
+    to  {transform:rotateX(360deg) rotateY(360deg)}
+  }
+  /* 움직임에 민감한 사람에게는 정지 상태로 */
+  @media (prefers-reduced-motion:reduce){ .cube{animation:none} }
+
   .slide{display:none;width:calc(100*var(--w));height:calc(100*var(--u));
          padding:calc(6*var(--u)) calc(8*var(--w)) calc(9*var(--u));
-         flex-direction:column;justify-content:center}
+         flex-direction:column;justify-content:center;
+         position:relative;z-index:1}          /* 배경 위에 올린다 */
   .slide.on{display:flex}
 
   .kicker{font-size:calc(2.7*var(--u));color:var(--accent);font-weight:700;margin:0 0 calc(2*var(--u));letter-spacing:.02em}
@@ -72,11 +95,13 @@
     html,body{overflow:visible;height:auto}
     .slide{display:flex !important;width:1280px;height:720px;page-break-after:always;break-after:page;overflow:hidden}
     .slide:last-child{page-break-after:auto;break-after:auto}
-    footer,.bar{display:none}
+    /* 제출용 PDF에서는 배경을 빼서 인쇄 품질과 가독성을 지킨다 */
+    footer,.bar,.bg{display:none}
   }
 </style>
 </head>
 <body>
+<div class="bg" id="bg" aria-hidden="true"></div>
 <div class="bar" id="bar"></div>
 
 <!-- 1 표지 -->
@@ -183,6 +208,21 @@
 </footer>
 
 <script>
+/* 배경 큐브 생성 — 화면 가장자리 위주로 배치해 가운데 글자를 피한다 */
+(function(){
+  const bg=document.getElementById('bg');
+  const SPOTS=[[6,14,120],[88,20,86],[14,74,150],[80,80,104],[50,8,70],[94,52,64],[4,44,78],[40,90,92]];
+  SPOTS.forEach(([x,y,size],i)=>{
+    const c=document.createElement('div');
+    c.className='cube';
+    c.style.cssText='left:'+x+'%;top:'+y+'%;width:'+size+'px;height:'+size+'px;'
+      + '--h:'+(size/2)+'px;margin:'+(-size/2)+'px 0 0 '+(-size/2)+'px;'
+      + 'animation-duration:'+(44+i*9)+'s;animation-delay:'+(-i*6)+'s';
+    c.innerHTML='<i class="f"></i>'.repeat(6);
+    bg.appendChild(c);
+  });
+})();
+
 const S=[...document.querySelectorAll('.slide')];
 let i=0;
 document.getElementById('tot').textContent=S.length;

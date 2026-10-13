@@ -26,162 +26,186 @@ TEMPLATE = r"""<!DOCTYPE html>
 <meta name="theme-color" content="#0a6b5c">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a6b5c'/%3E%3Ctext x='32' y='45' font-size='34' font-family='Malgun Gothic,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3E%EB%8F%8C%3C/text%3E%3C/svg%3E">
 <style>
+  /* ===== 디자인 토큰 =============================================
+     색   : 흰 배경 · 짙은 남색 글자 · 틸 강조 1색 (3색 원칙 유지).
+            나머지는 새 색이 아니라 같은 계열의 농도 단계다.
+     크기 : 황금비 1.618. 본문 17 → 27 → 44, 아래로 17÷1.618 ≈ 11.
+     여백 : 피보나치 5·8·13·21·34·55 (황금비의 정수 근사).
+     ============================================================== */
   :root{
-    --ink:#16243f;        /* 글자 */
-    --accent:#0a6b5c;     /* 강조 1색 */
-    --line:#e3e6ec;       /* 구분선 */
-    --mute:#6b7382;       /* 보조 글자 */
+    --ink:#16243f;         /* 글자 — 짙은 남색 */
+    --mute:#697585;        /* 보조 글자 */
+    --accent:#0a6b5c;      /* 강조 1색 — 틸 */
+    --accent-deep:#07564a; /* 강조색 짙은 단계 (호버·테두리) */
+    --accent-wash:#e8f1ee; /* 강조색 가장 옅은 단계 (배지 바탕) */
+    --soft:#f4f7f7;        /* 면 */
+    --line:#dfe6e7;        /* 구분선 */
+
+    --t-xs:11px; --t-sm:13px; --t-base:17px; --t-md:21px; --t-lg:27px; --t-xl:44px;
+    --s1:5px; --s2:8px; --s3:13px; --s4:21px; --s5:34px; --s6:55px;
+    --r:12px; --r-sm:9px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
+  /* 세로 리듬은 그리드 gap 하나로만 만든다 — 요소 기본 마진은 전부 제거 */
+  p,h1,h2,h3,ol,ul,figure,blockquote{margin:0}
   body{
     background:#fff; color:var(--ink);
     font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,sans-serif;
-    font-size:17px; line-height:1.55;
+    font-size:var(--t-base); line-height:1.55;
     -webkit-text-size-adjust:100%;
   }
-  body::before{content:"";display:block;height:4px;background:var(--accent)}   /* 상단 강조선 */
-  .wrap{max-width:720px;margin:0 auto;padding:22px 16px 48px;overflow-wrap:anywhere}
+  body::before{content:"";display:block;height:4px;background:var(--accent)}
 
-  .eyebrow{font-size:13px;color:var(--accent);font-weight:700;letter-spacing:.02em;margin:0 0 6px}
-  h1{font-size:25px;margin:0 0 6px;letter-spacing:-0.02em;line-height:1.25}
-  .lede{font-size:15px;color:var(--mute);margin:0 0 18px}
-
-  /* 입력 영역: 패널 하나로 묶는다 (고르는 곳 / 결과 경계) */
-  .panel{background:var(--soft);border-radius:12px;padding:14px 14px 12px;margin-bottom:18px}
-
-  /* flex 자식은 기본 min-width:auto 라 셀렉트 고유폭 때문에 안 줄어든다 → min-width:0 */
-  .pick{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:0}
-  .pick label{flex:1 1 150px;min-width:0;display:block}
-  .pick span{display:block;font-size:14px;color:var(--mute);margin-bottom:4px}
-  select{
-    width:100%;padding:13px 12px;font-size:17px;font-family:inherit;
-    color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:8px;
+  /* 전체 세로 리듬을 그리드 gap 하나로 통제한다 (요소별 margin 사용 안 함) */
+  .wrap{
+    max-width:720px;margin:0 auto;padding:var(--s4) var(--s3) var(--s6);
+    display:grid;grid-template-columns:minmax(0,1fr);row-gap:var(--s4);
+    overflow-wrap:anywhere;
   }
-  select:focus{outline:none;border-color:var(--accent)}
+  .wrap>*{margin:0}
 
-  .bar{
-    margin:0 0 14px;padding:12px 14px;border-left:4px solid var(--accent);
-    background:#f6f8f9;font-size:15px;
+  .head{display:grid;row-gap:var(--s1)}
+  .eyebrow{font-size:var(--t-sm);color:var(--accent);font-weight:700;letter-spacing:.02em}
+  h1{font-size:var(--t-lg);letter-spacing:-0.025em;line-height:1.22;font-weight:700}
+  .lede{font-size:15px;color:var(--mute)}
+
+  /* 입력 영역 — 고르는 곳과 결과의 경계 */
+  .panel{
+    background:var(--soft);border:1px solid var(--line);border-radius:var(--r);
+    padding:var(--s3);display:grid;row-gap:var(--s3);
   }
-  .bar b{font-size:17px}
-
-  ol{list-style:none;margin:0;padding:0}
-  li{border-bottom:1px solid var(--line);padding:16px 0}
-  li:first-child{border-top:1px solid var(--line)}
-
-  .row{display:flex;align-items:flex-start;gap:12px}
-  .rank{
-    flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:var(--line);
-    display:flex;align-items:center;justify-content:center;margin-top:1px;
-    font-size:14px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;
+  .pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--s3)}
+  .pick label,.find label{display:grid;row-gap:var(--s1);min-width:0}
+  .pick span,.find span{font-size:var(--t-sm);color:var(--mute)}
+  select,.find input{
+    width:100%;padding:var(--s3) 12px;font-size:var(--t-base);font-family:inherit;
+    color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:var(--r-sm);
   }
-  .body{flex:1;min-width:0}
-  .name{font-size:18px;font-weight:700;margin:0 0 2px;word-break:keep-all}
-  .where{font-size:14px;color:var(--mute);margin:0 0 8px;word-break:keep-all}
+  select:focus,.find input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash)}
+  .find{display:grid}
 
-  .big{display:flex;align-items:baseline;gap:7px;margin-bottom:4px}
-  .num{font-size:32px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
-  .num.good{color:var(--accent)}
-  .unit{font-size:15px;color:var(--mute)}
-  .calc{font-size:14px;color:var(--mute);margin:0 0 8px}
-  .cmp{font-size:14px;margin:0 0 10px}
-  .cmp.good{color:var(--accent);font-weight:700}
-  .act{margin-top:2px}
-
-  /* 넓은 화면: 왼쪽 기관명·근거, 오른쪽 큰 숫자 2단 → 숫자가 세로로 정렬된다 */
-  @media (min-width:600px){
-    .body{
-      display:grid;grid-template-columns:1fr 170px;column-gap:24px;
-      grid-template-areas:"name big" "where big" "calc big" "meter big" "cmp big" "note note" "tags tags" "act act";
-    }
-    .name{grid-area:name}.where{grid-area:where}.calc{grid-area:calc}.meter{grid-area:meter}
-    .cmp{grid-area:cmp}.new{grid-area:note}.tags{grid-area:tags}.act{grid-area:act}
-    .big{grid-area:big;flex-direction:column;align-items:flex-end;gap:0;margin:0;text-align:right}
-    .num{font-size:40px}
-    .unit{font-size:13px}
-  }
-
-  /* 중앙값 대비 막대: 가운데 눈금이 해당 시·도 중앙값, 채움 길이가 이 기관 */
-  .meter{margin:0 0 10px;max-width:420px}
-  .meter .track{position:relative;height:8px;background:var(--line);border-radius:4px}
-  .meter .fill{height:8px;border-radius:4px;background:var(--mute)}
-  .meter .fill.good{background:var(--accent)}
-  .meter .tick{position:absolute;left:50%;top:-4px;width:2px;height:16px;background:var(--ink)}
-  .meter .lab{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);margin-top:4px}
-  .meter .lab span{flex:1}.meter .lab span:nth-child(2){text-align:center}.meter .lab span:last-child{text-align:right}
-
-  .find{margin:10px 0 0}
-  .find span{display:block;font-size:14px;color:var(--mute);margin-bottom:4px}
-  .find input{
-    width:100%;padding:12px 12px;font-size:17px;font-family:inherit;
-    color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:8px;
-  }
-  .find input:focus{outline:none;border-color:var(--accent)}
-
-  .opts{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:10px 0 0;font-size:15px}
-  .opts label{display:flex;align-items:center;gap:7px;cursor:pointer}
+  .opts{display:grid;grid-template-columns:1fr auto;gap:var(--s2) var(--s3);align-items:center;font-size:15px}
+  .opts label{display:flex;align-items:center;gap:var(--s2);cursor:pointer}
   .opts input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
   button.share{
-    margin-left:auto;padding:8px 12px;font-size:14px;font-family:inherit;
-    color:var(--accent);background:#fff;border:1.5px solid var(--accent);border-radius:8px;cursor:pointer;
+    padding:var(--s2) var(--s3);font-size:var(--t-sm);font-family:inherit;font-weight:700;
+    color:var(--accent-deep);background:#fff;border:1.5px solid var(--line);
+    border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;
   }
-  a.portal{display:block;font-size:14px;color:var(--mute);margin-top:8px;text-decoration:underline;word-break:keep-all}
+  button.share:hover{border-color:var(--accent)}
 
-  .tags{font-size:14px;color:var(--mute);margin:0 0 12px}
+  /* 지역 기준선 — 스크롤해도 남도록 고정. 중앙값 수치는 화면에서 여기 한 곳에만 둔다 */
+  .bar{
+    position:sticky;top:0;z-index:5;
+    padding:var(--s3);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:var(--r-sm);background:#fbfdfd;font-size:15px;
+  }
+  .bar b{font-size:var(--t-base)}
+
+  ol{list-style:none;padding:0;display:grid;row-gap:0}
+  li{border-bottom:1px solid var(--line);padding:var(--s4) 0}
+  li:first-child{border-top:1px solid var(--line)}
+
+  .row{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:var(--s3);align-items:start}
+  .rank{
+    width:30px;height:30px;border-radius:50%;background:#fff;border:1.5px solid var(--line);
+    display:grid;place-items:center;margin-top:2px;
+    font-size:var(--t-sm);font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums;
+  }
+  .body{display:grid;row-gap:var(--s2);min-width:0}
+  .name{font-size:19px;font-weight:700;word-break:keep-all;line-height:1.3}
+  .where{font-size:var(--t-sm);color:var(--mute);word-break:keep-all}
+
+  .big{display:flex;align-items:baseline;gap:7px}
+  .num{font-size:34px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+  .num.good{color:var(--accent)}
+  .unit{font-size:var(--t-sm);color:var(--mute)}
+  .calc{font-size:var(--t-sm);color:var(--mute)}
+
+  /* 판정 배지 — 중앙값 수치는 위 기준선에 있으므로 여기선 방향만 말한다 */
+  .chip{
+    display:inline-block;padding:4px var(--s3);border-radius:999px;
+    font-size:var(--t-sm);font-weight:700;
+    background:var(--soft);color:var(--mute);border:1px solid var(--line);
+  }
+  .chip.good{background:var(--accent-wash);color:var(--accent-deep);border-color:#cfe3dd}
+
+  /* 넓은 화면 — 좌:우 = 1.618 : 1 (황금분할) */
+  @media (min-width:600px){
+    .body{
+      grid-template-columns:1.618fr 1fr;column-gap:var(--s4);
+      grid-template-areas:"name big" "where big" "calc big" "meter big" "verdict big" "note note" "tags tags" "act act";
+    }
+    .name{grid-area:name}.where{grid-area:where}.calc{grid-area:calc}.meter{grid-area:meter}
+    .verdict{grid-area:verdict}.new{grid-area:note}.tags{grid-area:tags}.act{grid-area:act}
+    .big{grid-area:big;flex-direction:column;align-items:flex-end;gap:0;text-align:right}
+    .num{font-size:var(--t-xl)}
+    .unit{font-size:var(--t-xs)}
+  }
+
+  /* 중앙값 대비 막대 — 가운데 눈금이 해당 시·도 중앙값 */
+  .meter{max-width:420px}
+  .meter .track{position:relative;height:var(--s2);background:var(--soft);border:1px solid var(--line);border-radius:999px}
+  .meter .fill{height:100%;border-radius:999px;background:var(--mute)}
+  .meter .fill.good{background:var(--accent)}
+  .meter .tick{position:absolute;left:50%;top:-5px;bottom:-5px;width:2px;background:var(--ink);border-radius:1px}
+
+  .tags{font-size:var(--t-sm);color:var(--mute)}
   .tags i{font-style:normal}
 
   .new{
-    display:block;font-size:14px;margin:0 0 10px;padding:9px 11px;
-    background:#f6f8f9;border-left:3px solid var(--mute);color:var(--ink);
+    font-size:var(--t-sm);padding:var(--s3);border-radius:var(--r-sm);
+    background:var(--soft);border:1px solid var(--line);color:var(--ink);line-height:1.6;
   }
   .new b{font-weight:700}
 
+  .act{display:grid;row-gap:var(--s2);justify-items:start}
   a.go{
-    display:inline-block;padding:11px 18px;font-size:16px;font-weight:700;
-    color:#fff;background:var(--accent);border-radius:8px;text-decoration:none;
+    display:inline-block;padding:var(--s3) var(--s4);font-size:16px;font-weight:700;
+    color:#fff;background:var(--accent);border-radius:var(--r-sm);text-decoration:none;
   }
+  a.go:hover{background:var(--accent-deep)}
+  a.portal{font-size:var(--t-sm);color:var(--mute);text-decoration:underline;word-break:keep-all}
+  a.portal:hover{color:var(--accent-deep)}
 
   .more{
-    display:block;width:100%;margin-top:18px;padding:14px;
-    font-size:16px;font-family:inherit;color:var(--ink);
-    background:#fff;border:1.5px solid var(--line);border-radius:8px;cursor:pointer;
+    width:100%;padding:var(--s3);font-size:16px;font-family:inherit;font-weight:700;
+    color:var(--accent-deep);background:#fff;border:1.5px solid var(--line);
+    border-radius:var(--r-sm);cursor:pointer;
   }
-  /* display:block 이 [hidden] 기본 규칙을 덮어쓰므로 명시적으로 숨긴다 */
+  .more:hover{border-color:var(--accent)}
   [hidden]{display:none !important}
-  .empty{padding:28px 0;color:var(--mute)}
+  .empty{padding:var(--s5) 0;color:var(--mute);border:0}
 
-  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);
-         font-size:13px;color:var(--mute);line-height:1.7}
+  footer{padding-top:var(--s4);border-top:1px solid var(--line);
+         font-size:var(--t-sm);color:var(--mute);line-height:1.7;display:grid;row-gap:2px}
   footer b{color:var(--ink)}
-  .warn{margin-top:10px;padding:11px 13px;background:#f6f8f9;border-radius:8px}
+  .warn{margin-top:var(--s2);padding:var(--s3);background:var(--soft);border-radius:var(--r-sm);line-height:1.65}
 
   @media (max-width:480px){
-    .wrap{padding:16px 14px 40px}
-    /* 세로 배치에서는 flex-grow 가 높이를 늘려 간격이 벌어진다 → 고정 */
-    .pick{flex-direction:column;gap:8px}
-    .pick label{flex:0 0 auto}
-    h1{font-size:20px}
-    .lede{margin-bottom:14px}
-    .bar{margin:14px 0 10px}
+    .wrap{padding:var(--s3) var(--s3) var(--s5);row-gap:var(--s3)}
+    .pick{grid-template-columns:1fr;gap:var(--s2)}
+    h1{font-size:var(--t-md)}
     .num{font-size:30px}
-    .rank{flex-basis:26px;width:26px;height:26px;font-size:13px}
-    .row{gap:10px}
-    .panel{padding:12px 12px 10px;margin-bottom:14px}
-    li{padding:14px 0}
-    a.go{display:block;text-align:center}
+    .rank{width:26px;height:26px;font-size:12px}
+    .row{column-gap:var(--s2)}
+    li{padding:var(--s3) 0}
+    .opts{grid-template-columns:1fr}
+    a.go,button.share{width:100%;text-align:center}
+    .act{justify-items:stretch}
     a.portal{text-align:center}
-    .opts{gap:8px}
-    button.share{margin-left:0;width:100%}
   }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <p class="eyebrow">공공데이터 1종 · 전국 __COUNT__곳</p>
-  <h1>주야간보호센터 돌봄 밀도 비교</h1>
-  <p class="lede">요양보호사 한 명이 어르신 몇 분을 돌보는지로 비교합니다.</p>
+  <header class="head">
+    <p class="eyebrow">공공데이터 1종 · 전국 __COUNT__곳</p>
+    <h1>주야간보호센터 돌봄 밀도 비교</h1>
+    <p class="lede">요양보호사 한 명이 어르신 몇 분을 돌보는지로 비교합니다.</p>
+  </header>
 
   <div class="panel">
   <div class="pick">
@@ -308,12 +332,13 @@ function render(){
 }
 
 function meter(ratio, med, good){
-  // 가운데(50%)가 중앙값. 중앙값의 2배를 끝으로 잡아 채움 길이를 정한다
+  // 가운데(50%)가 중앙값. 중앙값의 2배를 끝으로 잡아 채움 길이를 정한다.
+  // 수치 라벨은 달지 않는다 — 값은 큰 숫자에, 중앙값은 상단 기준선에 이미 있다.
   const pct = Math.max(4, Math.min(100, ratio/(med*2)*100));
-  return '<div class="meter"><div class="track">'
+  return '<div class="meter" title="가운데 눈금이 '+fmt(med)+'명(중앙값)"><div class="track">'
     + '<div class="fill'+(good?' good':'')+'" style="width:'+pct.toFixed(1)+'%"></div>'
-    + '<div class="tick" title="중앙값"></div></div>'
-    + '<div class="lab"><span>이곳 '+fmt(ratio)+'명</span><span>┃ 중앙값 '+fmt(med)+'명</span><span></span></div></div>';
+    + '<div class="tick"></div></div>'
+    + '</div>';
 }
 
 // 주소에 지역을 붙인다 (#서울특별시/관악구) → 링크를 보내면 같은 목록이 바로 열린다
@@ -362,9 +387,8 @@ function draw(){
     if(r[F.rehab]>0) tags.push('물리·작업치료사 '+r[F.rehab]+'명');
     if(r[F.social]>0) tags.push('사회복지사 '+r[F.social]+'명');
 
-    const cmp = good
-      ? sidoName+' 중앙값 '+fmt(med)+'명보다 <u>적습니다</u>'
-      : sidoName+' 중앙값 '+fmt(med)+'명보다 많습니다';
+    // 중앙값 수치는 상단 기준선에 한 번만. 카드에서는 방향만 말한다 (중복 제거)
+    const cmp = good ? '중앙값보다 적습니다' : '중앙값보다 많습니다';
 
     const note = r[F.isNew]
       ? '<p class="new"><b>'+esc(r[F.since])+' 지정 · 개원 1년 미만</b>입니다. '
@@ -382,7 +406,7 @@ function draw(){
       +     '<span class="unit">명 / 요양보호사 1명</span></div>'
       +   '<p class="calc">정원 '+r[F.cap]+'명 &divide; 요양보호사 '+r[F.care]+'명</p>'
       +   meter(ratio, med, good)
-      +   '<p class="cmp'+(good?' good':'')+'">'+cmp+'</p>'
+      +   '<p class="verdict"><span class="chip'+(good?' good':'')+'">'+cmp+'</span></p>'
       +   note
       +   (tags.length? '<p class="tags"><i>'+tags.join(' · ')+'</i></p>' : '')
       +   '<div class="act">'
