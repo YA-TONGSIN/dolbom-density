@@ -43,6 +43,9 @@ for r in sheet_rows("일반현황"):
     if code is None or code in gen:
         continue
     full = str(r.get("시도 시군구 법정동명") or "").split()
+    if not full:
+        # 법정동명 칸만 빈 행 — 상세주소 앞 두 어절이 "시도 시군구"다 (빌더와 별개로 여기서 다시 읽는다)
+        full = str(r.get("기관별 상세주소") or "").split()[:2]
     gen[code] = {
         "name": str(r.get("장기요양기관이름") or "").strip(),
         "sido": full[0] if len(full) > 0 else "",
@@ -77,13 +80,19 @@ def num(v):
 
 
 # 원본 기준 계산 — 기관코드별로 ratio 최소값 채택(= build 쪽 중복제거 규칙과 동일 의미)
+# ★ 주소 조건 없이 "정원·요양보호사가 둘 다 신고된 기관코드"를 먼저 센다.
+#   예전 검증은 빌더와 똑같이 시도가 빈 행을 버려서, 빌더가 92곳을 빠뜨려도 잡지 못했다.
+valid_codes = {code for (code, t), c in cap.items()
+               if (num(c) or 0) > 0 and (num(stf.get((code, t))) or 0) > 0}
 recomputed = {}
+no_region = []
 for (code, t), c in cap.items():
     cv, sv = num(c), num(stf.get((code, t)))
     if not cv or not sv or cv <= 0 or sv <= 0:
         continue
     g = gen.get(code)
     if not g or not g["sido"]:
+        no_region.append(code)
         continue
     ratio = round(cv / sv, 2)
     prev = recomputed.get(code)
@@ -93,6 +102,10 @@ for (code, t), c in cap.items():
                             "desig": g["desig"]}
 
 print(f"원본 독립 재계산: {len(recomputed):,}곳")
+missing = len(valid_codes) - len(items)
+print(f"  주소 조건 없이 센 유효 기관 {len(valid_codes):,}곳 · 화면 {len(items):,}곳 · "
+      f"{'빠진 곳 없음 ✔' if missing == 0 else '### ' + str(missing) + '곳 차이'}"
+      + (f" · 지역을 못 읽은 기관 {len(no_region)}곳" if no_region else ""))
 print()
 
 # ── 3. 전수 대조 ──────────────────────────────────────────────────────────
@@ -203,4 +216,4 @@ print()
 
 print("=" * 72)
 print(f"판정: 값 불일치 {len(mismatch)}건 · 중앙값 불일치 {bad}건 · 매칭실패 {len(unmatched)}건 · "
-      f"데이터 {'1종 OK' if meta_ok else '1종 아님'}")
+      f"누락 {missing}곳 · 데이터 {'1종 OK' if meta_ok else '1종 아님'}")

@@ -38,6 +38,35 @@ def pick_dong(full):
 
 gen["읍면동"] = gen["시도 시군구 법정동명"].map(pick_dong)
 
+# 「시도 시군구 법정동명」만 비고 「기관별 상세주소」는 멀쩡한 행이 있다(주야간보호 98행, 그중 정상 신고 92곳).
+# 예전에는 이 행들을 통째로 버려 여주시 15곳 중 8곳만 보이는 식으로 지역 목록이 비었다(3차 외부 검토 지적).
+# 상세주소도 같은 파일의 칸이고 "시도 시군구 …"로 시작하므로 앞 두 어절로 채운다.
+# 읍면동은 주소 끝 괄호 "(신내동)" 안에서, 없으면 어절 접미사로 찾는다.
+import re
+_known = gen.loc[gen["시도 시군구 법정동명"].notna(), ["시도", "시군구"]].drop_duplicates()
+KNOWN_SGG = set(zip(_known["시도"], _known["시군구"]))
+_blank = gen["시도 시군구 법정동명"].isna() & gen["기관별 상세주소"].notna()
+
+
+def dong_from_addr(addr):
+    m = re.search(r"\(([^)]*)\)\s*$", str(addr))
+    if m:
+        for tok in re.split(r"[,\s]+", m.group(1)):
+            if tok.endswith(DONG_SUFFIX):
+                return tok
+    return pick_dong(addr)
+
+
+_parts = gen.loc[_blank, "기관별 상세주소"].astype(str).str.split()
+_sd, _sg = _parts.str[0], _parts.str[1]
+_ok = [(a, b) in KNOWN_SGG for a, b in zip(_sd, _sg)]
+_fill = _blank.copy()
+_fill.loc[_blank] = _ok
+gen.loc[_fill, "시도"] = _sd[_ok].values
+gen.loc[_fill, "시군구"] = _sg[_ok].values
+gen.loc[_fill, "읍면동"] = gen.loc[_fill, "기관별 상세주소"].map(dong_from_addr)
+print(f"법정동명이 빈 행 {int(_blank.sum()):,}개 중 상세주소로 시도·시군구를 채운 행 {int(_fill.sum()):,}개")
+
 day = cap[cap["기관유형코드"].isin(TYPES)][[KEY, "기관유형코드", "정원"]]
 stf_cols = [KEY, "기관유형코드", "요양보호사", "간호사", "간호조무사",
             "사회복지사", "물리치료사", "작업치료사"]
@@ -50,15 +79,19 @@ print(f"주야간보호 전국 원시 {len(df):,}곳")
 for c in ["정원", "요양보호사", "간호사", "간호조무사", "사회복지사", "물리치료사", "작업치료사"]:
     df[c] = pd.to_numeric(df[c], errors="coerce")
 
+_n0 = len(df)
 df = df[df["시도"].notna() & (df["시도"] != "nan")]
+print(f"  시도를 알 수 없어 제외 {_n0 - len(df):,}곳")
 bad_cap = (df["정원"].fillna(0) <= 0).sum()
 bad_stf = (df["요양보호사"].fillna(0) <= 0).sum()
+# 둘 다 0/결측인 기관이 있어 두 숫자를 더하면 이중 집계가 된다 — 실제 제외 수는 합집합으로 센다
+bad_any = ((df["정원"].fillna(0) <= 0) | (df["요양보호사"].fillna(0) <= 0)).sum()
 
 d = df[(df["정원"] > 0) & (df["요양보호사"] > 0)].copy()
 d["ratio"] = (d["정원"] / d["요양보호사"]).round(2)
 
-print(f"  정원 0/결측    제외 {bad_cap:,}")
-print(f"  요양보호사 0/결측 제외 {bad_stf:,}")
+print(f"  정원 0/결측 {bad_cap:,} · 요양보호사 0/결측 {bad_stf:,} · 둘 다 {bad_cap + bad_stf - bad_any:,}")
+print(f"  → 나눌 수 없어 제외 {bad_any:,}곳 (중복 없이 센 값)")
 print(f"  → 순위 산출 가능 {len(d):,}곳")
 
 # 같은 기관이 B03/C03 중복 등록된 경우 1인당 수치가 유리한 쪽만 남김
