@@ -11,10 +11,14 @@
     --ink:#1b2220; --accent:#0a6b5c; --accent-deep:#07564a; --accent-wash:#e3f0ea;
     --line:#e6ddcf; --mute:#5e5850; --soft:#f0eae2;
     --bg:#fbf7f0; --card:#ffffff; --shadow:0 4px 24px rgba(60,48,30,.08);
-    --u:1vh; --w:1vw;
+    /* 화면을 16:9 무대로 고정한다. 창 비율이 달라도 글자가 더 줄바꿈되지 않아 아래가 잘리지 않는다
+       (전에는 높이=vh·폭=vw 따로 늘어나, 폭이 좁은 창에서 내용이 바닥을 뚫고 푸터와 겹쳤다) */
+    --u:min(1vh, .5625vw); --w:min(1vw, 1.7778vh);
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
+  body{display:grid;place-items:center}
+  body.on-cover{background:var(--accent)}    /* 표지가 무대보다 넓은 창에서도 틸이 끊기지 않게 */
   body{background:var(--bg);color:var(--ink);overflow:hidden;
        font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo",
                    "Malgun Gothic","맑은 고딕",system-ui,sans-serif}
@@ -101,7 +105,7 @@
   /* 본문 슬라이드는 위에서부터 쌓는다 — 제목이 모든 장에서 같은 높이에 온다.
      세로 중앙정렬이면 내용 길이에 따라 제목이 튀고 아래가 빈다. */
   .slide{display:none;width:calc(100*var(--w));height:calc(100*var(--u));
-         padding:calc(9*var(--u)) calc(8*var(--w)) calc(9*var(--u));
+         padding:calc(6.5*var(--u)) calc(8*var(--w)) calc(9*var(--u));
          flex-direction:column;justify-content:flex-start;
          position:relative;z-index:1}          /* 배경 위에 올린다 */
   .slide.on{display:flex}
@@ -124,7 +128,7 @@
       padding:calc(2.2*var(--u)) calc(4*var(--u));background:var(--accent);
       border-radius:999px;margin:calc(1*var(--u)) 0 calc(4*var(--u));letter-spacing:-.01em}
 
-  .cols{display:flex;gap:calc(2*var(--w));align-items:stretch;margin:calc(1*var(--u)) 0 calc(2.5*var(--u))}
+  .cols{display:flex;gap:calc(2*var(--w));align-items:stretch;margin:calc(1*var(--u)) 0 calc(2*var(--u))}
   .cols>div{flex:1;min-width:0}
   /* 흰 카드 — 바탕에서 그림자로 띄운다 */
   .card{background:var(--card);padding:calc(3.4*var(--u)) calc(3.4*var(--u));border-radius:calc(2.4*var(--u));box-shadow:var(--shadow)}
@@ -139,13 +143,13 @@
   /* 표 — 흰 카드 안에, 세로선 없이 */
   table{border-collapse:separate;border-spacing:0;width:100%;margin:calc(1*var(--u)) 0 calc(2.5*var(--u));font-size:calc(4.2*var(--u));
         background:var(--card);border-radius:calc(2*var(--u));box-shadow:var(--shadow);overflow:hidden}
-  th,td{padding:calc(2.1*var(--u)) calc(2.6*var(--u));border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  th,td{padding:calc(1.7*var(--u)) calc(2.6*var(--u));border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
   tr:last-child td{border-bottom:0}
   th{color:var(--mute);font-weight:600;font-size:calc(3.3*var(--u));background:var(--soft)}
   td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   tr.hi td{font-weight:700;color:var(--accent)}
 
-  .note{font-size:calc(3.3*var(--u));color:var(--mute);line-height:1.5;margin-top:calc(2.4*var(--u))}
+  .note{font-size:calc(3.3*var(--u));color:var(--mute);line-height:1.5;margin-top:calc(1.4*var(--u))}
   .box{font-size:calc(4.1*var(--u));padding:calc(2.8*var(--u)) calc(3.6*var(--u));background:var(--card);
        border-left:calc(1*var(--u)) solid var(--accent);border-radius:calc(1.6*var(--u));box-shadow:var(--shadow);
        line-height:1.5;margin-top:calc(2.5*var(--u));word-break:keep-all}
@@ -167,7 +171,7 @@
   .cover b{color:#fff}
   .cover .url{color:#fff}
 
-  footer{position:fixed;bottom:calc(2.4*var(--u));left:0;right:0;display:flex;justify-content:space-between;align-items:center;
+  footer{position:fixed;bottom:calc(1.6*var(--u));left:50%;width:calc(100*var(--w));transform:translateX(-50%);display:flex;justify-content:space-between;align-items:center;
          padding:0 calc(3*var(--w));font-size:calc(2.4*var(--u));color:var(--mute);z-index:3}
   footer .pg{padding:calc(.6*var(--u)) calc(1.6*var(--u));background:var(--card);border-radius:999px;box-shadow:var(--shadow);font-weight:700;color:var(--ink)}
   body.on-cover footer{color:rgba(255,255,255,.75)}   /* 틸 표지 위에서는 푸터 글자를 흰색으로 */
@@ -178,6 +182,7 @@
   @media print{
     :root{--u:7.2px;--w:12.8px}
     html,body{overflow:visible;height:auto}
+    body,body.on-cover{display:block;background:var(--bg)}   /* 화면용 표지 배경(틸)이 본문 장으로 새지 않게 */
     .slide{display:flex !important;width:1280px;height:720px;page-break-after:always;break-after:page;overflow:hidden}
     .slide:last-child{page-break-after:auto;break-after:auto}
     /* 제출용 PDF에서는 배경·히어로 3D를 빼서 가독성을 지킨다. 카드·표지 색은 그대로 인쇄 */
