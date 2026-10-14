@@ -49,14 +49,17 @@ function run(){
   chk('관악구 결과 표시', total > 0, total + '곳 (첫 화면)');
   chk('요약 바에 지역·중간값', /관악구/.test(bar()) && /중간값/.test(bar()));
   // 데이터 1종 — 다른 데이터에서 온 표시(평가등급·전화번호)가 화면에 남아 있으면 안 된다
-  chk('다른 데이터 표시 없음 (등급·전화번호)', !$('#onlyab') && !$('#onlytel') && n('.chip.gr') === 0 && n('a[href^="tel:"]') === 0 && !/공단 평가|\d{2,3}-\d{3,4}-\d{4}/.test($('#list').textContent.replace(/전화번호가 제공되지 않습니다/g,'')),
+  chk('다른 데이터 표시 없음 (등급·전화)', !$('#onlyab') && !$('#onlytel') && n('.chip.gr') === 0 && n('.tel') === 0 && n('a[href^="tel:"]') === 0 && !/공단 평가|\d{2,3}-\d{3,4}-\d{4}/.test($('#list').textContent),
       '등급 배지 ' + n('.chip.gr') + ' · 전화 링크 ' + n('a[href^="tel:"]'));
-  // 전화 아이콘을 누르면 "공공데이터가 전화번호를 제공하지 않는다"가 보여야 한다 (휴대폰엔 hover가 없다)
-  const telBtn = $('#list button.tel');
-  telBtn.click();
-  const tipShown = telBtn.classList.contains('open') && w.getComputedStyle(telBtn.querySelector('.tip')).visibility === 'visible';
-  chk('전화 아이콘 누르면 안내 표시', tipShown && /전화번호가 제공되지 않습니다/.test(telBtn.textContent), telBtn.querySelector('.tip').textContent.trim().slice(0,30));
-  d.body.click();
+  // 중간값과 값이 같은 기관은 "같습니다"로 따로 판정돼야 한다 (4차 검토: 85곳이 "많습니다"로 나오던 오류)
+  const seoulEq = [...si.options].find(o => o.textContent === '서울특별시');
+  sel(si, seoulEq.value); sel(sg, '강서구');
+  if ($('#more')) $('#more').click();
+  const eqCards = [...d.querySelectorAll('#list li')].filter(li => /중간값과 같습니다/.test(li.querySelector('.verdict').textContent)).length;
+  // 기대값은 화면에 실린 데이터에서 직접 센다 (강서구에서 1인당 값 = 서울 중간값인 기관 수)
+  const expectEq = w.eval("(()=>{const ix=DATA.sido.indexOf('서울특별시');const m=DATA.meta.sidoMedian['서울특별시'];return DATA.items.filter(r=>r[F.sidoIx]===ix&&r[F.sigungu]==='강서구'&&Math.abs(r[F.ratio]-m)<0.005).length})()");
+  chk('중간값과 같은 곳은 「같습니다」', expectEq > 0 && eqCards === expectEq, '강서구 기대 ' + expectEq + '곳 · 표시 ' + eqCards + '곳');
+  sel(si, seoulEq.value); sel(sg, '관악구');
   const first = $('#list li .name').textContent.trim();
   log.push('       1위: ' + first);
 
