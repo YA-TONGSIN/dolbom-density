@@ -35,12 +35,6 @@ FEE = {
 with open(src, encoding="utf-8") as f:
     data = json.load(f)
 
-# ③ 전화번호 집계 — 화면 하단 출처 표기용.
-# 빌드할 때마다 탑재 데이터에서 다시 세어 넣는다 (수기 입력 금지).
-_ti = data["fields"].index("tel") if "tel" in data["fields"] else None
-TEL_N = 0 if _ti is None else sum(1 for r in data["items"] if len(r) > _ti and r[_ti])
-TEL_PCT = round(TEL_N / len(data["items"]) * 100, 1) if data["items"] else 0.0
-
 data["fee"] = FEE if (FEE["asOf"] and FEE["limits"]) else None
 payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
 
@@ -50,9 +44,9 @@ TEMPLATE = r"""<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>주야간보호센터 돌봄 밀도 비교 — 요양보호사 1인당 어르신 수로 전국 비교</title>
-<meta name="description" content="부모님 동네 주야간보호센터를 요양보호사 1인당 어르신 수로 비교합니다. 공공데이터 3종(국민건강보험공단 장기요양기관 시설별 현황 + 평가 결과 + 상세정보 조회), 전국 __COUNT__곳, 공단 평가등급·전화번호를 나란히 표시.">
+<meta name="description" content="부모님 동네 주야간보호센터를 요양보호사 1인당 어르신 수로 비교합니다. 공공데이터 1종(국민건강보험공단 장기요양기관 시설별 현황), 전국 __COUNT__곳, 시·도 중간값과 비교.">
 <meta property="og:title" content="주야간보호센터 돌봄 밀도 비교">
-<meta property="og:description" content="공단 평가등급은 알려주지 않는 숫자 — 요양보호사 한 명이 어르신 몇 분을 돌보는지로 전국 주야간보호센터를 비교합니다.">
+<meta property="og:description" content="요양보호사 한 명이 어르신 몇 분을 돌보는지로 전국 주야간보호센터를 비교합니다.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#0a6b5c">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a6b5c'/%3E%3Ctext x='32' y='45' font-size='34' font-family='Malgun Gothic,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'%3E%EB%8F%8C%3C/text%3E%3C/svg%3E">
@@ -227,7 +221,7 @@ TEMPLATE = r"""<!DOCTYPE html>
      ① 새 색이 늘지 않는다(기존 --accent) ② 아이콘이 늘지 않는다
      ③ 1인당 숫자가 여전히 가장 커서 "강조는 하나" 규칙이 안 깨진다
      ④ 왕관은 "여기가 최고"로 읽혀 하단의 "품질을 보증하지 않는다" 고지와 부딪친다.
-        실제로 관악구 1위는 공단 평가 C등급이다. 상위 3곳이라는 '사실'만 말한다. */
+        상위 3곳이라는 '사실'만 말한다. */
   .rank.top{
     display:inline-block;padding:3px 10px;border-radius:999px;margin-right:9px;
     background:var(--accent);color:var(--on-accent);font-weight:800;
@@ -235,11 +229,6 @@ TEMPLATE = r"""<!DOCTYPE html>
   .name{font-size:var(--t-md);font-weight:700;word-break:keep-all;line-height:1.3;align-self:start}
   /* 빈 슬롯도 숨기지 않는다 — 숨기면 그 카드만 행이 하나 줄어 버튼이 다시 어긋난다 */
   .where{font-size:var(--t-sm);color:var(--mute);word-break:keep-all;line-height:1.5}
-  /* 주소 줄 끝에 전화번호. 새 행을 만들지 않는다 — 카드가 서브그리드 10행으로 묶여 있어
-     행을 늘리면 3열에서 카드끼리 높이가 어긋난다. */
-  .where .telno{color:var(--ink);font-weight:700;white-space:nowrap}
-  /* 번호가 없는 기관. 숨기지 않고 사실대로 적는다 — 빈칸은 오해를 만든다 */
-  .where .telno.none{color:var(--mute);font-weight:400}
   .cap{font-size:var(--t-sm);color:var(--mute);margin-top:4px}
 
   .big{display:flex;align-items:baseline;gap:6px}
@@ -259,31 +248,17 @@ TEMPLATE = r"""<!DOCTYPE html>
   }
   .chip.good{background:var(--accent-wash);color:var(--accent-deep)}
   .chip.near{background:var(--ink);color:var(--card);margin-left:6px}   /* 내 동네 표식 — 검정 알약 */
-  /* 공단 평가등급 — 2종째 데이터. 우리 숫자(틸)와 섞이지 않게 테두리형 중립 배지로 둔다.
-     등급은 공단이 매긴 값이고 우리 지표가 아니다. 색으로 서열을 매기지 않는다. */
-  .chip.gr{background:transparent;border:1.5px solid var(--line);color:var(--mute);font-weight:700}
-  .chip.gr b{color:var(--ink);font-weight:800}
-  .chip.gr.none{border-style:dashed}
   /* 규모 표식. 요양보호사 2명 이하면 1인당 수치가 한 사람 입·퇴사로 크게 흔들린다.
      순위에서 빼지 않는다 — 빼면 작은 기관을 보호자 눈에서 지우는 일이다. 대신 보이게 한다. */
   .chip.small{background:transparent;border:1.5px dashed var(--line);color:var(--mute);font-weight:700}
   .verdict{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
   @media (prefers-color-scheme:dark){ .chip.good{color:#5fd3b8} }  /* 어두운 바탕에서 배지 글자 대비 확보 */
 
-  /* 두 데이터를 겹쳐야만 나오는 한 문장 — 이 서비스가 존재하는 이유 */
-  .insight{
-    padding:var(--s3) 15px;border-radius:var(--r-sm);
-    background:var(--accent-wash);color:var(--ink);
-    font-size:var(--t-sm);line-height:1.6;border:1px solid var(--hair);
-  }
-  .insight b{font-weight:800;color:var(--accent-deep)}
-  @media (prefers-color-scheme:dark){ .insight b{color:#7fd9c6} }
-
   /* 넓은 화면 — 카드가 3열로 서므로 카드 안은 세로 쌓기 유지. 숫자만 조금 더 크게 */
   @media (min-width:900px){
     .num{font-size:48px}
   }
-  /* 토글 5개 — 휴대폰에선 세로 한 줄씩, 넓은 화면에선 가로로 흘려 눈이 덜 오르내리게 */
+  /* 토글 — 휴대폰에선 세로 한 줄씩, 넓은 화면에선 가로 한 줄로 */
   @media (min-width:640px){
     .toggles{grid-template-columns:repeat(3,auto);justify-content:start;column-gap:var(--s4,24px)}
     .toggles label{white-space:nowrap}
@@ -317,16 +292,13 @@ TEMPLATE = r"""<!DOCTYPE html>
   .btns{display:grid;grid-template-columns:auto 1fr auto;gap:var(--s2);align-items:stretch}
   .act a.go{text-align:center}
 
-  /* 전화 아이콘 — 번호를 띄우는 게 아니라 "왜 번호가 없는지"를 알려준다 */
+  /* 전화 아이콘 — 전화를 거는 버튼이 아니라 "왜 번호가 없는지"를 알려주는 버튼.
+     휴대폰엔 hover가 없으므로 누르면(.open) 말풍선이 열린다. 한 번 더 누르거나 바깥을 누르면 닫힌다. */
   .tel{position:relative;display:grid;place-items:center;width:52px;border-radius:var(--r-sm);
-       background:var(--soft);color:var(--mute);cursor:help;transition:background var(--t-fast),color var(--t-fast)}
-  .tel:hover,.tel:focus-visible{background:var(--accent-wash);color:var(--accent-deep);outline:none}
-  /* 번호를 받은 기관은 아이콘이 실제 통화 링크가 된다(휴대폰에서 탭하면 바로 발신).
-     틸을 쓰는 건 '좋음'이 아니라 '행동'이라는 뜻 — 검색하기 버튼과 같은 규칙이다. */
-  a.tel{text-decoration:none;cursor:pointer;background:var(--accent-wash);color:var(--accent-deep)}
-  a.tel:hover,a.tel:focus-visible{background:var(--accent);color:var(--on-accent)}
-  /* 말풍선은 아이콘 왼쪽 끝에 맞춰 오른쪽으로 편다.
-     가운데 정렬하면 첫 열 카드에서 화면 밖으로 잘린다. */
+       background:var(--soft);color:var(--mute);border:0;padding:0;cursor:pointer;font:inherit;
+       transition:background var(--t-fast),color var(--t-fast)}
+  .tel:hover,.tel:focus-visible,.tel.open{background:var(--accent-wash);color:var(--accent-deep);outline:none}
+  /* 말풍선은 아이콘 왼쪽 끝에 맞춰 오른쪽으로 편다 — 가운데 정렬하면 첫 열 카드에서 잘린다 */
   .tel .tip{
     position:absolute;bottom:calc(100% + 9px);left:0;transform:translateY(4px);
     width:max-content;max-width:230px;padding:10px 13px;border-radius:var(--r-sm);
@@ -337,7 +309,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   .tel .tip::after{content:"";position:absolute;top:100%;left:20px;
                    border:6px solid transparent;border-top-color:var(--ink)}
   .tel .tip b{color:var(--card)}
-  .tel:hover .tip,.tel:focus-visible .tip{opacity:1;visibility:visible;transform:translateY(0)}
+  .tel:hover .tip,.tel:focus-visible .tip,.tel.open .tip{opacity:1;visibility:visible;transform:translateY(0)}
 
   button.copy{
     padding:0 var(--s4);font-size:var(--t-sm);font-family:inherit;font-weight:700;white-space:nowrap;
@@ -403,7 +375,6 @@ TEMPLATE = r"""<!DOCTYPE html>
     a.go,button.share{width:100%;text-align:center}
     .act{justify-items:stretch}
     a.portal{text-align:center}
-    .tel{width:48px}
     button.copy{padding:0 var(--s3)}
   }
 </style>
@@ -412,12 +383,9 @@ TEMPLATE = r"""<!DOCTYPE html>
 <div class="wrap">
 
   <header class="head">
-    <p class="eyebrow">공공데이터 3종 · 전국 __COUNT__곳</p>
+    <p class="eyebrow">공공데이터 1종 · 전국 __COUNT__곳</p>
     <h1>주야간보호센터 돌봄 밀도 비교</h1>
     <p class="lede">요양보호사 한 명이 어르신 몇 분을 돌보는지로 비교합니다. 숫자가 적을수록 한 분께 더 많은 손길이 갑니다.</p>
-    <p class="insight">공단 평가 <b>A등급</b>을 받은 __GAPBASE__곳 가운데 <b>__GAPCOUNT__곳(__GAPPCT__%)</b>은
-      요양보호사 1인당 어르신 수가 전국 중간값보다 많습니다. 등급과 이 숫자는 거의 따로 움직입니다
-      (평가총점과의 상관계수 __CORR__). <b>등급만 보고 고르면 놓치는 숫자</b>라서, 두 가지를 나란히 놓았습니다.</p>
   </header>
 
   <div class="panel">
@@ -441,9 +409,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   <div class="opts">
     <div class="toggles">
       <label><input id="only" type="checkbox"> 중간값보다 적은 곳만</label>
-      <label><input id="onlyab" type="checkbox"> 공단 평가 A·B등급만</label>
       <label><input id="hidesmall" type="checkbox"> 요양보호사 3명 이상만</label>
-      <label><input id="onlytel" type="checkbox"> 전화번호 있는 곳만</label>
       <label id="feeopts" hidden><input id="feeon" type="checkbox"> 비용 함께 보기</label>
     </div>
     <button id="share" class="share" type="button" hidden>이 결과 링크 복사</button>
@@ -460,12 +426,8 @@ TEMPLATE = r"""<!DOCTYPE html>
 
   <footer>
     <details class="src"><summary>출처 · 계산 기준</summary>
-    <div><b>출처 ①</b> 공공데이터포털 · 국민건강보험공단_장기요양기관 시설별 현황 (데이터 __DATAID__)</div>
+    <div><b>출처</b> 공공데이터포털 · 국민건강보험공단_장기요양기관 시설별 현황 (데이터 __DATAID__)</div>
     <div><b>자료 기준일</b> __BASEDATE__ · <b>갱신 주기</b> __CYCLE__</div>
-    <div><b>출처 ②</b> 공공데이터포털 · __SOURCE2__ (데이터 __DATAID2__) · 평가일자 __EVALRANGE__</div>
-    <div><b>두 자료 연결</b> __JOINKEY__ · 등급이 붙은 곳 <b>__EVALMATCHED__곳(__EVALRATE__%)</b>, 나머지는 「평가 이력 없음」</div>
-    <div><b>출처 ③</b> 공공데이터포털 · 국민건강보험공단_장기요양기관 시설별 상세정보 조회 (데이터 15058856) · <b>조회 2026-10-14</b> · 전화번호만 사용</div>
-    <div><b>전화번호</b> 기관코드로 연결해 <b>__TELMATCHED__곳(__TELRATE__%)</b>에 붙였습니다 · 받지 못한 곳은 비워 두었습니다 · 순위·정렬에는 쓰지 않습니다</div>
     <div><b>대상</b> __TYPES__ · 전국 <b>__COUNT__곳</b></div>
     <div><b>계산식</b> 요양보호사 1인당 어르신 수 = 정원 &divide; 요양보호사 수 (적을수록 앞)</div>
     <div><b>중간값 기준</b> __MEDIANNOTE__ (개원 __NEWCOUNT__곳 제외)</div>
@@ -478,11 +440,6 @@ TEMPLATE = r"""<!DOCTYPE html>
       <b>개원 1년 미만 기관은 따로 표시했습니다.</b> 전국 자료로 확인해 보면 개원 2개월 미만 기관의
       1인당 어르신 수 중간값은 11.0명, 10년 이상 된 기관은 6.2명입니다.
       갓 문을 연 곳이 불리하게 보이는 것은 운영이 자리 잡는 중이기 때문이지 돌봄이 나쁘다는 뜻이 아닙니다.
-      <br><br>
-      <b>공단 평가등급은 __EVALRANGE__에 이뤄진 평가입니다.</b> 그 뒤에 바뀐 사정은 반영되어 있지 않고,
-      아직 평가를 받지 않은 기관도 많아 __COUNT__곳 중 __EVALMATCHED__곳에만 등급이 있습니다.
-      등급이 없는 것은 <b>나쁘다는 뜻이 아니라 자료가 없다는 뜻</b>입니다.
-      두 자료는 기관코드로만 연결했고, 이름이나 주소가 비슷하다는 이유로 붙이지 않았습니다.
     </div>
   </footer>
 
@@ -506,9 +463,7 @@ const FEE = DATA.fee || null;
 const $feeopts=document.getElementById('feeopts'), $feeon=document.getElementById('feeon');
 const $feepick=document.getElementById('feepick'), $grade=document.getElementById('grade');
 const $only = document.getElementById('only');
-const $onlyab = document.getElementById('onlyab');
 const $hidesmall = document.getElementById('hidesmall');
-const $onlytel = document.getElementById('onlytel');
 const $share= document.getElementById('share');
 const SAVE  = 'dolbom.pick';   // 마지막 선택 지역 (브라우저에만 저장)
 
@@ -568,7 +523,7 @@ function feeLine(){
     + '한 달에 쓸 수 있는 <b>상한</b>이고, 주야간보호·방문요양 등을 <b>합쳐서</b> 쓰는 금액입니다. '
     + '등급으로 정해지므로 <b>기관마다 같습니다</b>. 일반 대상 본인부담 '+(FEE.copayRate*100)+'% 기준이며, '
     + '감경 대상은 비율이 다르고 식재료비·간식비 등 비급여는 빠져 있습니다.<br>'
-    + '이 금액은 <b>위 공공데이터 3종에 들어 있지 않습니다.</b> '
+    + '이 금액은 <b>위 공공데이터에 들어 있지 않습니다.</b> '
     + esc(FEE.source)+'('+esc(FEE.asOf)+')를 상수로 넣은 것이며, <b>순위·정렬에는 쓰지 않습니다.</b>'
     + '</details></small>';
 }
@@ -612,14 +567,8 @@ function render(){
   const q=$q.value.trim().toLowerCase();
   current = q? region.filter(r=> r[F.name].toLowerCase().includes(q)) : region;
   if($only.checked) current = current.filter(r=> r[F.ratio] < med);
-  // 공단 평가등급 필터. 평가 이력이 없는 기관은 여기서 전부 빠지므로 아래에서 몇 곳이 빠졌는지 밝힌다
-  const noEval = region.filter(r=> !r[F.grade]).length;
-  if($onlyab.checked) current = current.filter(r=> r[F.grade]==='A' || r[F.grade]==='B');
-  // 규모 — ①(정원·요양보호사)을 걸러보기에도 쓴다. 순위 계산은 건드리지 않는다.
+  // 규모 — 정원·요양보호사 칸을 걸러보기에도 쓴다. 순위 계산은 건드리지 않는다.
   if($hidesmall.checked) current = current.filter(r=> r[F.care]>=3);
-  // 전화번호 — ③을 걸러보기에 쓴다. 바로 전화할 곳만 추리려는 사람을 위해.
-  const noTel = region.filter(r=> !r[F.tel]).length;
-  if($onlytel.checked) current = current.filter(r=> r[F.tel]);
 
   // "내 동네 먼저" — 같은 읍면동을 위로, 그 안에서는 1인당 적은 순. 순위 번호(r.rank)는 지역 순위 그대로
   const dg=$dong.value;
@@ -629,14 +578,11 @@ function render(){
   const cond=[];
   if(q) cond.push('\''+esc($q.value.trim())+'\'');
   if($only.checked) cond.push('중간값보다 적은 곳');
-  if($onlyab.checked) cond.push('평가 A·B등급');
   if($hidesmall.checked) cond.push('요양보호사 3명 이상');
-  if($onlytel.checked) cond.push('전화번호 있는 곳');
 
   if(current.length===0){
-    $bar.innerHTML = where+' 주야간보호센터 '+region.length+'곳 중 <b>'+cond.join(' · ')+'</b>에 해당하는 곳이 없습니다.'
-      + ($onlyab.checked && noEval? '<small class="hint">이 지역 '+noEval+'곳은 공단 평가 이력이 없어 등급 조건에서 빠집니다.</small>' : '');
-    $list.innerHTML='<li class="empty">'+(($only.checked||$onlyab.checked)? '체크를 풀거나 ' : '')+(q? '검색어를 지우거나 ' : '')+'다른 지역을 골라 보세요.</li>';
+    $bar.innerHTML = where+' 주야간보호센터 '+region.length+'곳 중 <b>'+cond.join(' · ')+'</b>에 해당하는 곳이 없습니다.';
+    $list.innerHTML='<li class="empty">'+(($only.checked||$hidesmall.checked)? '체크를 풀거나 ' : '')+(q? '검색어를 지우거나 ' : '')+'다른 지역을 골라 보세요.</li>';
     return;
   }
   $bar.innerHTML = where+' 주야간보호센터 <b>'+region.length+'곳</b>'
@@ -644,43 +590,11 @@ function render(){
     + ' · '+sidoName+' 중간값 <b>'+fmt(med)+'명</b>'
     + (dg? ' · <b>'+esc(dg)+'</b> '+current.filter(r=>r[F.dong]===dg).length+'곳 먼저' : '')
     + '<small class="hint">중간값 = 이 지역 기관을 줄 세웠을 때 한가운데 값 (개원 1년 미만 제외)'
-    + ($onlyab.checked && noEval? '<br>이 지역 '+noEval+'곳은 공단 평가 이력이 없어 이 조건에서 빠져 있습니다.' : '')
-    + ($onlytel.checked && noTel? '<br>이 지역 '+noTel+'곳은 전화번호를 받지 못해 이 조건에서 빠져 있습니다.' : '')
     + '</small>'
     + feeLine();
 
   expanded=false;
   draw();
-}
-
-/* 공단 평가등급 배지 — 2종째 데이터에서 온 값.
-   우리가 매긴 등급이 아니라는 걸 분명히 하려고 "공단 평가"를 앞에 적고,
-   평가 연도까지 붙인다 (2023~2024년 평가라 최근 변화는 반영되지 않는다).
-   이력이 없으면 숨기지 않고 "평가 이력 없음"으로 적는다 — 빈칸은 오해를 만든다. */
-function gradeChip(r){
-  const g=r[F.grade];
-  if(!g) return '<span class="chip gr none" title="공단 평가를 아직 받지 않았거나 공개 자료에 없습니다">공단 평가 이력 없음</span>';
-  const y=r[F.gyear];
-  return '<span class="chip gr">공단 평가 <b>'+esc(g)+'등급</b>'+(y? ' <span>('+esc(y)+')</span>' : '')+'</span>';
-}
-
-/* 전화 슬롯. 번호를 받은 기관은 실제 통화 링크, 못 받은 기관은 종전처럼 안내 말풍선.
-   번호가 없는 이유가 바뀌었다 — 예전엔 "데이터에 칸이 없음"이었지만 지금은
-   "이 기관만 공개돼 있지 않음"이다. 문구도 사실에 맞게 바꾼다. */
-const PHONE_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">'
-  + '<path fill="currentColor" d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.2.4 2.4.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1l-2.3 2.2z"/></svg>';
-
-function telSlot(r){
-  const t = r[F.tel];
-  if(t){
-    return '<a class="tel" href="tel:'+esc(t.replace(/-/g,''))+'" '
-      + 'aria-label="'+esc(r[F.name])+' 전화 걸기 '+esc(t)+'" title="'+esc(t)+'">'
-      + PHONE_SVG + '</a>';
-  }
-  return '<span class="tel" tabindex="0" role="note" aria-label="전화번호 안내">'
-    + PHONE_SVG
-    + '<span class="tip">이 기관은 <b>전화번호가 공개되어 있지 않습니다.</b><br>「검색하기」로 확인하세요.</span>'
-    + '</span>';
 }
 
 function meter(ratio, med, good){
@@ -784,25 +698,20 @@ function draw(){
     // 카드 안을 평평한 10행으로 둔다 — 서브그리드로 같은 줄 카드의 행 높이를 맞추기 위해
     return '<li>'
       + '<p class="name"><span class="rank'+(r.rank<=3?' top':'')+'">'+r.rank+'위</span>'+esc(r[F.name])+'</p>'
-      +   '<p class="where">'+esc(r[F.sigungu]+' '+r[F.addr])
-      +     (r[F.tel]? ' · <span class="telno">'+esc(r[F.tel])+'</span>'
-      //  번호가 없는 76곳: 아이콘 말풍선은 hover/focus 전용이라 휴대폰에서 안 열린다.
-      //  선언한 사용자가 "폰으로 보는 보호자"이므로 글자로 적어 둔다.
-                      : ' · <span class="telno none">번호 비공개</span>')+'</p>'
+      +   '<p class="where">'+esc(r[F.sigungu]+' '+r[F.addr])+'</p>'
       +   '<p class="cap">요양보호사 1명이 돌보는 어르신</p>'
       +   '<div class="big"><span class="num'+(good?' good':'')+'">'+fmt(ratio)+'</span>'
       +     '<span class="unit">명</span></div>'
       +   '<p class="calc">정원 '+r[F.cap]+'명 &divide; 요양보호사 '+r[F.care]+'명</p>'
       +   meter(ratio, med, good)
       +   '<p class="verdict"><span class="chip'+(good?' good':'')+'">'+cmp+'</span>'
-      +     gradeChip(r)
       +     (r[F.care]<=2? '<span class="chip small" title="요양보호사 '+r[F.care]+'명. 한 사람이 들고 나면 이 숫자가 크게 흔들립니다">작은 기관</span>' : '')
       +     (($dong.value && r[F.dong]===$dong.value)? '<span class="chip near">내 동네</span>' : '')+'</p>'
       +   '<p class="tags"><b>인력</b> <i>'+tags.join(' · ')+'</i></p>'
       +   '<div class="noteslot">'+note+'</div>'
       +   '<div class="act">'
       +   '<div class="btns">'
-      +     telSlot(r)
+      +     TEL_BTN
       +     '<a class="go" target="_blank" rel="noopener noreferrer" '
       +       'href="https://search.naver.com/search.naver?query='+q+'">검색하기</a>'
       +     '<button class="copy" type="button" data-addr="'+esc(fullAddr)+'">주소 복사</button>'
@@ -820,6 +729,26 @@ function draw(){
 }
 
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* 전화 아이콘 — 번호를 보여주지 않는다. 쓰는 공공데이터(시설별 현황)에 전화번호 칸이 없기 때문이고,
+   다른 데이터를 붙이면 규칙(데이터 1개)을 넘는다. 누르면 그 사실을 말해 주고 「검색하기」로 안내한다. */
+const PHONE_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">'
+  + '<path fill="currentColor" d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.2.4 2.4.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1l-2.3 2.2z"/></svg>';
+const TEL_BTN = '<button class="tel" type="button" aria-label="전화번호 안내" aria-expanded="false">'
+  + PHONE_SVG
+  + '<span class="tip" role="tooltip">이 공공데이터에는 <b>전화번호가 제공되지 않습니다.</b><br>「검색하기」로 확인하세요.</span>'
+  + '</button>';
+function closeTels(except){
+  $list.querySelectorAll('button.tel.open').forEach(b=>{ if(b!==except){ b.classList.remove('open'); b.setAttribute('aria-expanded','false'); } });
+}
+$list.addEventListener('click', e=>{
+  const t = e.target.closest('button.tel'); if(!t) return;
+  closeTels(t);
+  const on = t.classList.toggle('open');
+  t.setAttribute('aria-expanded', on? 'true':'false');
+});
+document.addEventListener('click', e=>{ if(!e.target.closest('button.tel')) closeTels(null); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeTels(null); });
 
 /* 주소 복사 — 카드가 매번 다시 그려지므로 목록에 위임해서 한 번만 연결한다 */
 $list.addEventListener('click', e=>{
@@ -842,9 +771,7 @@ $sgg .addEventListener('change', ()=>{ fillDong(); render(); savePick(); setHash
 $dong.addEventListener('change', ()=>{ render(); savePick(); setHash(); });
 $q   .addEventListener('input', render);
 $only.addEventListener('change', render);
-$onlyab.addEventListener('change', render);
 $hidesmall.addEventListener('change', render);
-$onlytel.addEventListener('change', render);
 if(FEE){
   $feeon.addEventListener('change', ()=>{ $feepick.hidden=!$feeon.checked; render(); });
   $grade.addEventListener('change', render);
@@ -867,21 +794,7 @@ html = (TEMPLATE
         .replace("__TYPES__", m["types"])
         .replace("__COUNT__", f"{m['count']:,}")
         .replace("__MEDIANNOTE__", m["medianNote"].replace("중앙값", "중간값"))   # 화면 용어는 "중간값"
-        .replace("__NEWCOUNT__", f"{m['newCount']:,}")
-        # ── 2종째(평가 결과) 관련 ───────────────────────────────────────
-        .replace("__SOURCE2__", m["source2"].replace("공공데이터포털 ", ""))
-        .replace("__DATAID2__", m["dataId2"])
-        .replace("__JOINKEY__", m["joinKey"])
-        .replace("__EVALRANGE__", m["evalRange"])
-        .replace("__EVALMATCHED__", f"{m['evalMatched']:,}")
-        .replace("__EVALRATE__", f"{m['evalRate']}")
-        .replace("__GAPCOUNT__", f"{m['gapCount']:,}")
-        .replace("__GAPBASE__", f"{m['gapBase']:,}")
-        .replace("__GAPPCT__", f"{m['gapPct']}")
-        .replace("__CORR__", f"{m['corr']}")
-        # ── 3종째(상세정보 조회 — 전화번호) 관련 ──────────────────
-        .replace("__TELMATCHED__", f"{TEL_N:,}")
-        .replace("__TELRATE__", f"{TEL_PCT}"))
+        .replace("__NEWCOUNT__", f"{m['newCount']:,}"))
 
 outdir = os.path.dirname(out)
 if outdir:                      # 현재 폴더에 바로 쓰는 경우 dirname이 빈 문자열이다

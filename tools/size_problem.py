@@ -3,7 +3,6 @@
 주장이 아니라 수치로 묻는다:
   ① 보호자 한 명이 실제로 마주하는 후보가 몇 곳인가  (고르기 어려운가)
   ② 어디를 고르냐에 따라 실제로 차이가 나는가        (고를 가치가 있는가)
-  ③ 그 차이를 기존 수단(공단 평가등급)으로 알 수 있는가 (새 도구가 필요한가)
 
 실행: python tools/size_problem.py build/index.html
 """
@@ -36,57 +35,36 @@ for th in (10, 20, 30):
           f"({pop/len(items)*100:.0f}%의 기관이 '후보 {th}곳 이상'인 동네에 있다)")
 
 # ── ② 같은 동네 안에서 선택이 만드는 차이 ─────────────────────────────────
+# 개원 1년 미만 기관은 중간값 계산에서 뺐으므로 여기서도 뺀 값을 본문 수치로 쓴다.
+# (넣으면 정원 91명·요양보호사 1명 같은 신규 기관 때문에 격차가 부풀려진다)
+def spread(rows_by_sgg, label):
+    gaps, best, worst = [], [], []
+    for k, v in rows_by_sgg.items():
+        rs = sorted(x[F["ratio"]] for x in v)
+        if len(rs) < 5:
+            continue
+        gaps.append(rs[-1] - rs[0]); best.append(rs[0]); worst.append(rs[-1])
+    fold = st.median(worst) / max(st.median(best), 0.01)
+    print(f"  [{label}] 기관 5곳 이상 시·군·구 {len(gaps)}개 · 격차 중앙값 {st.median(gaps):.1f}명 · "
+          f"가장 적은 곳 {st.median(best):.1f}명 ↔ 많은 곳 {st.median(worst):.1f}명 = {fold:.1f}배")
+    return st.median(gaps), fold
+
 print()
 print("=" * 70)
 print("② 같은 시·군·구 안에서, 어디를 고르냐에 따라 생기는 차이")
-gaps, ratios_best, ratios_worst = [], [], []
+spread(by_sgg, "전체 (참고)")
+mature_by = defaultdict(list)
 for k, v in by_sgg.items():
-    if len(v) < 5:
-        continue
-    rs = sorted(x[F["ratio"]] for x in v)
-    gaps.append(rs[-1] - rs[0])
-    ratios_best.append(rs[0])
-    ratios_worst.append(rs[-1])
-print(f"  대상: 기관 5곳 이상인 시·군·구 {len(gaps)}개")
-print(f"  최저 ~ 최고 1인당 격차   중앙값 {st.median(gaps):.1f}명 · 평균 {st.mean(gaps):.1f}명")
-print(f"  그 동네 가장 좋은 곳     중앙값 {st.median(ratios_best):.1f}명")
-print(f"  그 동네 가장 나쁜 곳     중앙값 {st.median(ratios_worst):.1f}명")
-fold = st.median(ratios_worst) / max(st.median(ratios_best), 0.01)
-print(f"  → 같은 동네 안에서도 {fold:.1f}배 차이. 멀리 갈 것도 없이 '옆 센터'가 다르다")
+    mature_by[k] = [x for x in v if not x[F["isNew"]]]
+gap_m, fold_m = spread(mature_by, "운영 1년 이상 — 본문 수치")
+print(f"  → 같은 동네 안에서도 {fold_m:.1f}배 차이. 멀리 갈 것도 없이 '옆 센터'가 다르다")
 
-# ── ③ 기존 수단으로 그 차이를 알 수 있는가 ────────────────────────────────
-print()
-print("=" * 70)
-print("③ 공단 평가등급만으로 그 차이를 알 수 있는가")
-graded = [r for r in items if r[F["grade"]]]
-ungraded = [r for r in items if not r[F["grade"]]]
-print(f"  평가등급이 있는 기관 {len(graded):,}곳 / 없는 기관 {len(ungraded):,}곳 "
-      f"({len(ungraded)/len(items)*100:.0f}%는 등급으로 비교 자체가 불가)")
-
-# 같은 시군구·같은 등급인데 1인당이 갈리는 쌍이 얼마나 되나
-same_grade_spread = []
-for k, v in by_sgg.items():
-    byg = defaultdict(list)
-    for x in v:
-        if x[F["grade"]]:
-            byg[x[F["grade"]]].append(x[F["ratio"]])
-    for g, rs in byg.items():
-        if len(rs) >= 3:
-            same_grade_spread.append(max(rs) - min(rs))
-if same_grade_spread:
-    print(f"  같은 시·군·구 + 같은 등급 묶음 {len(same_grade_spread)}개 (3곳 이상)")
-    print(f"    그 안에서의 1인당 격차  중앙값 {st.median(same_grade_spread):.1f}명 · 최대 {max(same_grade_spread):.1f}명")
-    print(f"    → 등급이 같아도 인력은 갈린다. 등급은 이 질문에 답하지 않는다")
-
-# 보호자가 '등급 A'만 믿고 고를 때 실제로 밟는 지뢰
-a_rows = [r for r in graded if r[F["grade"]] == "A"]
-trap = [r for r in a_rows if r[F["ratio"]] > nat]
-print(f"  A등급 {len(a_rows):,}곳 중 전국 중간값({nat}) 초과 {len(trap):,}곳 ({len(trap)/len(a_rows)*100:.1f}%)")
+# ── ③ 기존 수단 ──────────────────────────────────────────────────────────
+# 데이터 1종 규칙이라 평가등급과의 비교는 하지 않는다(10-14 개정).
+# 지도앱·공단 포털이 지역 안 비교를 제공하지 않는다는 것은 직접 확인한 사실로 PLAN 1번에 적는다.
 
 print()
 print("=" * 70)
 print("한 문장으로")
 print(f"  후보는 한 동네에 중앙값 {st.median(counts):.0f}곳이고, 그 안에서 1인당이 "
-      f"{st.median(gaps):.1f}명까지 갈리는데,")
-print(f"  그 차이를 알려주는 수단이 없다 — {len(ungraded)/len(items)*100:.0f}%는 등급조차 없고, "
-      f"등급이 있어도 A등급의 {len(trap)/len(a_rows)*100:.0f}%가 중간값 아래다.")
+      f"{fold_m:.1f}배({gap_m:.1f}명)까지 갈리는데, 그 차이를 한눈에 보여주는 수단이 없다.")

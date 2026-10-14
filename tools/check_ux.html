@@ -48,28 +48,34 @@ function run(){
   const total = n('#list li');
   chk('관악구 결과 표시', total > 0, total + '곳 (첫 화면)');
   chk('요약 바에 지역·중간값', /관악구/.test(bar()) && /중간값/.test(bar()));
-  chk('평가등급 배지가 모든 카드에', n('#list .chip.gr') === total, n('#list .chip.gr') + '/' + total);
+  // 데이터 1종 — 다른 데이터에서 온 표시(평가등급·전화번호)가 화면에 남아 있으면 안 된다
+  chk('다른 데이터 표시 없음 (등급·전화번호)', !$('#onlyab') && !$('#onlytel') && n('.chip.gr') === 0 && n('a[href^="tel:"]') === 0 && !/공단 평가|\d{2,3}-\d{3,4}-\d{4}/.test($('#list').textContent.replace(/전화번호가 제공되지 않습니다/g,'')),
+      '등급 배지 ' + n('.chip.gr') + ' · 전화 링크 ' + n('a[href^="tel:"]'));
+  // 전화 아이콘을 누르면 "공공데이터가 전화번호를 제공하지 않는다"가 보여야 한다 (휴대폰엔 hover가 없다)
+  const telBtn = $('#list button.tel');
+  telBtn.click();
+  const tipShown = telBtn.classList.contains('open') && w.getComputedStyle(telBtn.querySelector('.tip')).visibility === 'visible';
+  chk('전화 아이콘 누르면 안내 표시', tipShown && /전화번호가 제공되지 않습니다/.test(telBtn.textContent), telBtn.querySelector('.tip').textContent.trim().slice(0,30));
+  d.body.click();
   const first = $('#list li .name').textContent.trim();
   log.push('       1위: ' + first);
-  log.push('       1위 등급: ' + $('#list li .chip.gr').textContent.trim());
 
   log.push('');
   log.push('【필터 — 단독 / 조합】');
-  const only = $('#only'), onlyab = $('#onlyab');
+  const only = $('#only'), small = $('#hidesmall');
   only.checked = true; fire(only, 'change');
   const a = n('#list li');
   chk('중간값 필터 단독 동작', a > 0 && a <= total, total + ' → ' + a + '곳');
   only.checked = false; fire(only, 'change');
-  onlyab.checked = true; fire(onlyab, 'change');
+  small.checked = true; fire(small, 'change');
   const b = n('#list li');
-  chk('평가등급 필터 단독 동작', b > 0, total + ' → ' + b + '곳');
-  chk('등급 필터 시 A·B만 남음',
-      [...d.querySelectorAll('#list .chip.gr')].every(c => /A등급|B등급/.test(c.textContent)));
-  chk('평가 이력 없는 곳이 빠진다고 안내', /평가 이력이 없어/.test(bar()));
+  chk('규모 필터 단독 동작', b > 0, total + ' → ' + b + '곳');
+  chk('규모 필터 시 「작은 기관」이 남지 않음', n('#list .chip.small') === 0, '남은 배지 ' + n('#list .chip.small'));
+  chk('요약 바에 규모 조건 표기', /요양보호사 3명 이상/.test(bar()));
   only.checked = true; fire(only, 'change');
   const c = n('#list li');
   chk('두 필터 동시 적용', c <= Math.min(a, b), '교집합 ' + c + '곳');
-  chk('요약 바에 조건 두 개 표기', /중간값보다 적은 곳/.test(bar()) && /A·B등급/.test(bar()));
+  chk('요약 바에 조건 두 개 표기', /중간값보다 적은 곳/.test(bar()) && /요양보호사 3명 이상/.test(bar()));
 
   log.push('');
   log.push('【없는 조건 — 깨지지 않는가】');
@@ -80,7 +86,7 @@ function run(){
   chk('화면 안 깨짐 (목록 영역 유지)', !!$('#list'));
   q.value = ''; fire(q, 'input');
   only.checked = false; fire(only, 'change');
-  onlyab.checked = false; fire(onlyab, 'change');
+  small.checked = false; fire(small, 'change');
   chk('조건 해제 시 전체 복귀', n('#list li') === total, n('#list li') + '곳');
 
   log.push('');

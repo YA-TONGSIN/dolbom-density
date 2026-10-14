@@ -44,13 +44,15 @@ function measure(id, w){
   const h1 = d.querySelector('h1');
   const h1size = h1 ? d.defaultView.getComputedStyle(h1).fontSize : '?';
   const cards = d.querySelectorAll('#list li').length;
-  const chips = d.querySelectorAll('.chip.gr').length;
+  // 1위 카드가 화면 맨 위에서 몇 px 아래에서 시작하는가 (휴대폰 첫 화면 높이 ≈ 700px)
+  const firstCard = d.querySelector('#list li');
+  const firstTop = firstCard ? Math.round(firstCard.getBoundingClientRect().top + d.defaultView.scrollY) : -1;
   const lines = [];
   lines.push('[' + w + 'px]');
   lines.push('  scrollWidth      ' + scrollW + (over > 1 ? '   ### 가로 넘침 ' + over + 'px' : '   가로 넘침 없음'));
   lines.push('  .pick 열 수      ' + cols + (cols === 1 ? '  (세로 1열 — 모바일 규칙 적용됨)' : '  ### 모바일 규칙 미적용'));
   lines.push('  h1 글자          ' + h1size);
-  lines.push('  카드 수          ' + cards + ' · 평가등급 배지 ' + chips);
+  lines.push('  카드 수          ' + cards + ' · 1위 카드 시작 ' + firstTop + 'px');
   lines.push('  삐져나간 요소    ' + (bad.length ? bad.length + '개 → ' + bad.slice(0,6).join(' | ') : '없음'));
   return lines.join('\n');
 }
