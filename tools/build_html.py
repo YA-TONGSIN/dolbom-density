@@ -376,6 +376,16 @@ TEMPLATE = r"""<!DOCTYPE html>
 
   footer{padding:var(--s3) var(--s1) 0;font-size:14px;color:var(--mute);line-height:1.7;display:grid;row-gap:2px}
   footer b{color:var(--ink)}
+  /* 출처·계산 기준은 접어 둔다 — 9줄이 경고문보다 먼저 눈에 들어와 경고가 묻혔다.
+     경고(.warn)는 접지 않는다: 이 숫자의 한계는 항상 보여야 한다 */
+  footer details.src{display:grid;row-gap:2px}
+  footer details.src summary{cursor:pointer;font-weight:700;color:var(--accent-deep);list-style:none;
+    padding:6px 0;width:max-content}
+  footer details.src summary::-webkit-details-marker{display:none}
+  footer details.src summary::before{content:"ⓘ ";}
+  footer details.src summary::after{content:" ▾";font-size:12px}
+  footer details.src[open] summary::after{content:" ▴"}
+  footer details.src[open]{padding-bottom:var(--s2)}
   .warn{margin-top:var(--s2);padding:var(--s3) 15px;background:var(--card);border:1px solid var(--hair);border-radius:var(--r-sm);line-height:1.7;font-size:var(--t-sm);box-shadow:var(--shadow)}
 
   @media (max-width:480px){
@@ -449,6 +459,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   <button id="more" class="more" hidden>나머지 전부 보기</button>
 
   <footer>
+    <details class="src"><summary>출처 · 계산 기준</summary>
     <div><b>출처 ①</b> 공공데이터포털 · 국민건강보험공단_장기요양기관 시설별 현황 (데이터 __DATAID__)</div>
     <div><b>자료 기준일</b> __BASEDATE__ · <b>갱신 주기</b> __CYCLE__</div>
     <div><b>출처 ②</b> 공공데이터포털 · __SOURCE2__ (데이터 __DATAID2__) · 평가일자 __EVALRANGE__</div>
@@ -458,6 +469,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     <div><b>대상</b> __TYPES__ · 전국 <b>__COUNT__곳</b></div>
     <div><b>계산식</b> 요양보호사 1인당 어르신 수 = 정원 &divide; 요양보호사 수 (적을수록 앞)</div>
     <div><b>중간값 기준</b> __MEDIANNOTE__ (개원 __NEWCOUNT__곳 제외)</div>
+    </details>
     <div class="warn">
       이 숫자는 <b>돌봄 품질을 보증하지 않습니다.</b> 정원은 실제 이용 인원이 아니라 등록 가능한 최대 인원이고,
       요양보호사 수는 기관이 신고한 값입니다. <b>비교의 출발점</b>으로만 사용하시고,
